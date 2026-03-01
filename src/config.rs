@@ -3,14 +3,40 @@ use serde::{Deserialize, Serialize};
 use std::fs::read_to_string;
 
 // config structure
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Default)]
+#[serde(default)]
 pub struct Config {
-	pub port: u16,
+	pub network: Network,
+	pub paths: Paths,
 }
 
-impl Default for Config {
+#[derive(Deserialize, Serialize)]
+#[serde(default)]
+pub struct Network {
+	pub port: u16,
+	pub host: String,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(default)]
+pub struct Paths {
+	pub db_file: String,
+}
+
+impl Default for Network {
 	fn default() -> Self {
-		Config { port: 3000 }
+		Self {
+			port: 3000,
+			host: "127.0.0.1".into(),
+		}
+	}
+}
+
+impl Default for Paths {
+	fn default() -> Self {
+		Self {
+			db_file: "aleym.db".into(),
+		}
 	}
 }
 
