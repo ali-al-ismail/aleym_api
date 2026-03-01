@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+aleym_core = { git = "https://github.com/zefr0x/aleym_core.git"}
 axum = "0.8.8"
 futures = "0.3.32"
 serde = { version = "1.0.228", features = ["derive"] }

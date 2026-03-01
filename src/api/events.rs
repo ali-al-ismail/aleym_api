@@ -4,6 +4,7 @@ use axum::response::sse::{Event, KeepAlive, Sse};
 use futures::{Stream, StreamExt};
 use serde::Serialize;
 use std::convert::Infallible;
+use std::sync::Arc;
 use tokio_stream::wrappers::BroadcastStream;
 
 #[derive(Clone, Serialize)]
@@ -15,7 +16,7 @@ pub enum EventType {
 }
 
 // sends events of type EventType via the /sse endpoint
-pub async fn events_handler(State(state): State<AppState>) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
+pub async fn events_handler(State(state): State<Arc<AppState>>) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
 	let event_rx = state.event_tx.subscribe();
 	let stream = BroadcastStream::new(event_rx).filter_map(|result| async {
 		match result {
@@ -26,3 +27,5 @@ pub async fn events_handler(State(state): State<AppState>) -> Sse<impl Stream<It
 
 	Sse::new(stream).keep_alive(KeepAlive::default())
 }
+
+// TODO: need tests for SSE response
