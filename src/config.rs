@@ -1,6 +1,6 @@
 // this files houses configs that require a restart to change
 use serde::{Deserialize, Serialize};
-use std::fs::read_to_string;
+use std::{fs::read_to_string, path::PathBuf};
 
 // config structure
 #[derive(Deserialize, Serialize, Default)]
@@ -20,7 +20,7 @@ pub struct Network {
 #[derive(Deserialize, Serialize)]
 #[serde(default)]
 pub struct Paths {
-	pub db_file: String,
+	pub db_file: PathBuf,
 }
 
 impl Default for Network {
@@ -35,7 +35,7 @@ impl Default for Network {
 impl Default for Paths {
 	fn default() -> Self {
 		Self {
-			db_file: "aleym.db".into(),
+			db_file: PathBuf::from("aleym.db"),
 		}
 	}
 }
@@ -50,5 +50,34 @@ impl Config {
 			Ok(content) => toml::from_str(&content).unwrap_or_else(|_| Config::default()),
 			Err(_) => Config::default(),
 		}
+	}
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn test_default_config() {
+		let config = Config::default();
+		assert_eq!(config.network.port, 3000);
+		assert_eq!(config.network.host, "127.0.0.1");
+		assert_eq!(config.paths.db_file, PathBuf::from("aleym.db"));
+	}
+
+	#[test]
+	fn test_partial_config() {
+		let toml_str = r#"
+			[network]
+			port = 9080
+
+			[paths]
+			db_file = "custom.db"
+		"#;
+
+		let config: Config = toml::from_str(toml_str).unwrap();
+		assert_eq!(config.network.port, 9080);
+		assert_eq!(config.network.host, "127.0.0.1");
+		assert_eq!(config.paths.db_file, PathBuf::from("custom.db"));
 	}
 }
