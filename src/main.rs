@@ -16,6 +16,12 @@ async fn main() {
 		.await
 		.expect("Couldn't create Aleym Representative");
 
+	// placeholder, should handle errors and inform the user via webgui before applying migrations
+	if repr.storage.has_pending_migrations().await.unwrap() {
+		println! {"Detected pending migrations, running..."};
+		repr.storage.apply_migrations().await.unwrap();
+	}
+
 	let appstate = appstate::AppState::new(Arc::new(repr));
 	let app = app::build(Arc::new(appstate));
 
