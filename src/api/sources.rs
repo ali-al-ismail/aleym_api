@@ -1,4 +1,4 @@
-use crate::appstate::AppState;
+use crate::{api::categories::Category, appstate::AppState};
 use aleym_core::db::uuid::Uuid;
 use aleym_core::net::InterfaceType;
 use axum::{
@@ -124,9 +124,44 @@ pub async fn get_source_by_id(State(state): State<Arc<AppState>>, Path(id): Path
 	})
 }
 
-pub async fn get_source_categories() {}
+pub async fn get_source_categories(State(state): State<Arc<AppState>>, Path(id): Path<Uuid>) -> Json<Vec<Category>> {
+	let categories = state
+		.repr
+		.storage
+		.get_categories_of_source(id)
+		.await
+		.unwrap()
+		.into_iter()
+		.map(|cat| Category {
+			id: cat.id,
+			name: cat.name,
+			description: cat.description,
+		})
+		.collect();
+	Json(categories)
+}
 
-pub async fn get_sources_by_category() {}
+pub async fn get_sources_by_category(State(state): State<Arc<AppState>>, Path(id): Path<Uuid>) -> Json<Vec<Source>> {
+	let sources = state
+		.repr
+		.storage
+		.get_sources_by_category(id)
+		.await
+		.unwrap()
+		.into_iter()
+		.map(|src| Source {
+			id: src.id,
+			parent_directory: src.parent_directory,
+			name: src.name,
+			description: src.description,
+			icon_uri: src.icon_uri,
+			logo_uri: src.logo_uri,
+			custom_id: src.custom_id,
+			is_enabled: src.is_enabled,
+		})
+		.collect();
+	Json(sources)
+}
 
 pub async fn delete_source(State(state): State<Arc<AppState>>, Path(id): Path<Uuid>) -> StatusCode {
 	state.repr.storage.delete_source(id).await.unwrap();
