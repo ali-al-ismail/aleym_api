@@ -22,6 +22,15 @@ async fn main() {
 		repr.storage.apply_migrations().await.unwrap();
 	}
 
+	// need to create a root source directory
+	if repr.storage.get_root_directories().await.unwrap().is_empty() {
+		println!("Creating root source directory...");
+		repr.storage
+			.create_source_directory(None, "root".to_string(), None)
+			.await
+			.unwrap();
+	}
+
 	let appstate = appstate::AppState::new(Arc::new(repr));
 	let app = app::build(Arc::new(appstate));
 
