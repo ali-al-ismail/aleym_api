@@ -1,6 +1,6 @@
 use crate::{api::categories::Category, appstate::AppState};
-use aleym_core::db::uuid::Uuid;
-use aleym_core::net::InterfaceType;
+use aleym_core::net::{InterfaceType, NetworkError};
+use aleym_core::{db::uuid::Uuid, inform::Parameters};
 use axum::{
 	Json,
 	extract::{Path, State},
@@ -14,6 +14,8 @@ use std::sync::Arc;
 pub struct Source {
 	pub id: Uuid,
 	pub parent_directory: Uuid,
+	pub informant: i8,
+	pub networktype: NetworkType,
 	pub name: String,
 	pub description: Option<String>,
 	pub icon_uri: Option<String>,
@@ -27,8 +29,7 @@ pub struct CreateSource {
 	pub name: String,
 	pub description: Option<String>,
 	pub network: NetworkType,
-	//pub informant_type: InformantType, -- currently InformantType from aleym_core is private
-	pub informant_type: i8,
+	pub informant: Parameters,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -40,28 +41,32 @@ pub struct EditSource {
 }
 
 #[derive(Serialize, Deserialize)]
-pub enum InformantType {
-	TestPlaceholder = 0,
-}
-
-#[derive(Serialize, Deserialize)]
 pub enum NetworkType {
 	Clear = 1,
 	Tor = 2,
 }
 
-// this function doesn't work
+// This function expects the client to send a Json with the following fields:
+// "informant": {"FeedRs": {"feed_url": "https://example.com"}}
+// "network": "Clear" or "Tor"
+// "name": "example"
+// "description": "example" or NULL (not necessary to include this field)
 pub async fn create_source(State(state): State<Arc<AppState>>, Json(payload): Json<CreateSource>) -> StatusCode {
 	let root_dir_uuid = get_root_dir(&state).await;
 
-	/* state.repr.storage.add_source(
-		root_dir_uuid,
-		0i8, // bricked cause the informant type is private
-		payload.network.into(),
-		payload.name,
-		payload.description,
-		true,
-	); */
+	state
+		.repr
+		.storage
+		.add_source(
+			root_dir_uuid,
+			payload.informant,
+			payload.network.into(),
+			payload.name,
+			payload.description,
+			true,
+		)
+		.await
+		.unwrap();
 
 	StatusCode::CREATED
 }
@@ -99,6 +104,8 @@ pub async fn get_sources(State(state): State<Arc<AppState>>) -> Json<Vec<Source>
 		.map(|src| Source {
 			id: src.id,
 			parent_directory: src.parent_directory,
+			networktype: src.network.try_into().unwrap(),
+			informant: src.informant,
 			name: src.name,
 			description: src.description,
 			icon_uri: src.icon_uri,
@@ -115,6 +122,8 @@ pub async fn get_source_by_id(State(state): State<Arc<AppState>>, Path(id): Path
 	Json(Source {
 		id: src.id,
 		parent_directory: src.parent_directory,
+		networktype: src.network.try_into().unwrap(),
+		informant: src.informant,
 		name: src.name,
 		description: src.description,
 		icon_uri: src.icon_uri,
@@ -152,6 +161,8 @@ pub async fn get_sources_by_category(State(state): State<Arc<AppState>>, Path(id
 		.map(|src| Source {
 			id: src.id,
 			parent_directory: src.parent_directory,
+			networktype: src.network.try_into().unwrap(),
+			informant: src.informant,
 			name: src.name,
 			description: src.description,
 			icon_uri: src.icon_uri,
@@ -196,8 +207,7 @@ pub async fn link_source_to_category(
 
 pub async fn unlink_source_to_category(
 	State(state): State<Arc<AppState>>,
-	Path(source_id): Path<Uuid>,
-	Path(category_id): Path<Uuid>,
+	Path((source_id, category_id)): Path<(Uuid, Uuid)>,
 ) -> StatusCode {
 	state
 		.repr
@@ -213,6 +223,18 @@ impl From<NetworkType> for InterfaceType {
 		match value {
 			NetworkType::Clear => InterfaceType::Clear,
 			NetworkType::Tor => InterfaceType::Tor,
+		}
+	}
+}
+
+impl TryFrom<i8> for NetworkType {
+	type Error = NetworkError;
+
+	fn try_from(i: i8) -> Result<Self, Self::Error> {
+		match i {
+			1 => Ok(NetworkType::Clear),
+			2 => Ok(NetworkType::Tor),
+			_ => Err(aleym_core::net::NetworkError::UnsupportedNetworkInterfaceIdentifier(i)),
 		}
 	}
 }

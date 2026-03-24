@@ -2,18 +2,21 @@ use crate::api::articles::{get_article_by_id, get_articles};
 use crate::api::categories::{create_category, delete_category, get_categories, update_category};
 use crate::api::events::events_handler;
 use crate::api::sources::{
-	create_source, get_source_by_id, get_source_categories, get_sources, get_sources_by_category,
+	create_source, delete_source, get_source_by_id, get_source_categories, get_sources, get_sources_by_category,
 	link_source_to_category, unlink_source_to_category, update_source,
 };
 use crate::appstate::AppState;
-use axum::routing::{delete, get, post, put};
+use axum::routing::{get, post, put};
 use std::sync::Arc;
 use tower_http::services::{ServeDir, ServeFile};
 
 pub fn build(appstate: Arc<AppState>) -> axum::Router {
 	let source_routes = axum::Router::new()
 		.route("/sources", get(get_sources).post(create_source))
-		.route("/sources/{id}", get(get_source_by_id).put(update_source))
+		.route(
+			"/sources/{id}",
+			get(get_source_by_id).put(update_source).delete(delete_source),
+		)
 		.route("/sources/{id}/categories", get(get_source_categories))
 		.route(
 			"/sources/{source_id}/categories/{category_id}",
