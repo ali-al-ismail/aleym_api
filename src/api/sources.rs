@@ -97,7 +97,7 @@ pub async fn get_sources(State(state): State<Arc<AppState>>) -> Json<Vec<Source>
 	let sources = state
 		.repr
 		.storage
-		.get_all_sources()
+		.get_all_sources(None)
 		.await
 		.unwrap()
 		.into_iter()
