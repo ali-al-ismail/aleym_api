@@ -2,9 +2,11 @@ mod api;
 mod app;
 mod appstate;
 mod config;
+use aleym_core::Event;
 use aleym_core::Representative;
 use std::sync::Arc;
 
+use crate::api::events::EventType;
 use crate::app::App;
 
 #[tokio::main]
@@ -14,7 +16,7 @@ async fn main() {
 	let host = config.network.host;
 	let db_file = config.paths.db_file;
 
-	let repr = Representative::new(Some(db_file.as_path()))
+	let mut repr = Representative::new(Some(db_file.as_path()))
 		.await
 		.expect("Couldn't create Aleym Representative");
 
@@ -33,13 +35,51 @@ async fn main() {
 			.unwrap();
 	}
 
-	let appstate = appstate::AppState::new(Arc::new(repr));
+	// set up rx and tx for events
+	let mut event_rx = repr.open_events_channel();
+	let repr = Arc::new(repr);
+	let appstate = appstate::AppState::new(repr);
+	let event_tx = appstate.event_tx.clone();
+	/* // new thread for events from the core
+	tokio::spawn(async move {
+		while let Some(event) = event_rx.recv().await {
+			let core_event = match event {
+				Event::NewsUpdated { .. } => EventType::Update,
+				Event::InformantError { .. } => EventType::Failure,
+			};
+			let _ = event_tx.send(core_event);
+		}
+	});
+
+	let repr = appstate.repr.clone(); // need this thing so tokio doesn't steal repr ownership from appstate
+	tokio::spawn(async move {
+		repr.start_scheduler().await.unwrap();
+	}); */
+
+	let repr = appstate.repr.clone();
 	let app = App::new(appstate);
 	let router = app.build();
 
-	println!("Starting server on {}:{}", host, port);
-	let listener = tokio::net::TcpListener::bind(format!("{}:{}", host, port))
-		.await
-		.unwrap();
-	axum::serve(listener, router).await.unwrap();
+	tokio::join!(
+		async move { repr.start_scheduler().await.unwrap() },
+		async move {
+			while let Some(event) = event_rx.recv().await {
+				let event_type = match event {
+					Event::NewsUpdated { .. } => EventType::Update,
+					Event::InformantError { source_id: _, error } => {
+						println!("failed fetch to news from a source: {error}");
+						EventType::Failure
+					}
+				};
+				let _ = event_tx.send(event_type);
+			}
+		},
+		async move {
+			println!("Starting server on {}:{}", host, port);
+			let listener = tokio::net::TcpListener::bind(format!("{}:{}", host, port))
+				.await
+				.unwrap();
+			axum::serve(listener, router).await.unwrap();
+		}
+	);
 }

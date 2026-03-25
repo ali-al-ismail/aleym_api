@@ -6,7 +6,6 @@ use tokio::sync::broadcast;
 #[derive(Clone)]
 pub struct AppState {
 	pub event_tx: broadcast::Sender<EventType>,
-	//pub event_rx: broadcast::Receiver<T>, // events from the aleym_core
 	pub repr: Arc<Representative>,
 }
 

@@ -12,7 +12,7 @@ use tokio_stream::wrappers::BroadcastStream;
 pub enum EventType {
 	Update,
 	Failure,
-	Success,
+	//Success,
 }
 
 // sends events of type EventType via the /sse endpoint
