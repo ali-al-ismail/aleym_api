@@ -5,6 +5,8 @@ mod config;
 use aleym_core::Representative;
 use std::sync::Arc;
 
+use crate::app::App;
+
 #[tokio::main]
 async fn main() {
 	let config: config::Config = config::Config::load();
@@ -32,11 +34,12 @@ async fn main() {
 	}
 
 	let appstate = appstate::AppState::new(Arc::new(repr));
-	let app = app::build(Arc::new(appstate));
+	let app = App::new(appstate);
+	let router = app.build();
 
 	println!("Starting server on {}:{}", host, port);
 	let listener = tokio::net::TcpListener::bind(format!("{}:{}", host, port))
 		.await
 		.unwrap();
-	axum::serve(listener, app).await.unwrap();
+	axum::serve(listener, router).await.unwrap();
 }

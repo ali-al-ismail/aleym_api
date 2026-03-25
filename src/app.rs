@@ -10,33 +10,43 @@ use axum::routing::{get, post, put};
 use std::sync::Arc;
 use tower_http::services::{ServeDir, ServeFile};
 
-pub fn build(appstate: Arc<AppState>) -> axum::Router {
-	let source_routes = axum::Router::new()
-		.route("/sources", get(get_sources).post(create_source))
-		.route(
-			"/sources/{id}",
-			get(get_source_by_id).put(update_source).delete(delete_source),
-		)
-		.route("/sources/{id}/categories", get(get_source_categories))
-		.route(
-			"/sources/{source_id}/categories/{category_id}",
-			post(link_source_to_category).delete(unlink_source_to_category),
-		);
+pub struct App {
+	pub state: Arc<AppState>,
+}
 
-	let categories_routes = axum::Router::new()
-		.route("/categories", get(get_categories).post(create_category))
-		.route("/categories/{id}", put(update_category).delete(delete_category))
-		.route("/categories/{id}/sources", get(get_sources_by_category));
+impl App {
+	pub fn new(state: AppState) -> App {
+		Self { state: Arc::new(state) }
+	}
 
-	let articles_routes = axum::Router::new()
-		.route("/articles", get(get_articles))
-		.route("/articles/{id}", get(get_article_by_id));
+	pub fn build(&self) -> axum::Router {
+		let source_routes = axum::Router::new()
+			.route("/sources", get(get_sources).post(create_source))
+			.route(
+				"/sources/{id}",
+				get(get_source_by_id).put(update_source).delete(delete_source),
+			)
+			.route("/sources/{id}/categories", get(get_source_categories))
+			.route(
+				"/sources/{source_id}/categories/{category_id}",
+				post(link_source_to_category).delete(unlink_source_to_category),
+			);
 
-	let api_routes = source_routes.merge(categories_routes).merge(articles_routes);
+		let categories_routes = axum::Router::new()
+			.route("/categories", get(get_categories).post(create_category))
+			.route("/categories/{id}", put(update_category).delete(delete_category))
+			.route("/categories/{id}/sources", get(get_sources_by_category));
 
-	axum::Router::new()
-		.nest("/api", api_routes)
-		.route("/events", get(events_handler))
-		.with_state(appstate)
-		.fallback_service(ServeDir::new("web/dist").not_found_service(ServeFile::new("web/dist/index.html")))
+		let articles_routes = axum::Router::new()
+			.route("/articles", get(get_articles))
+			.route("/articles/{id}", get(get_article_by_id));
+
+		let api_routes = source_routes.merge(categories_routes).merge(articles_routes);
+
+		axum::Router::new()
+			.nest("/api", api_routes)
+			.route("/events", get(events_handler))
+			.with_state(self.state.clone())
+			.fallback_service(ServeDir::new("web/dist").not_found_service(ServeFile::new("web/dist/index.html")))
+	}
 }
