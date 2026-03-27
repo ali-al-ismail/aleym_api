@@ -1,4 +1,7 @@
-use crate::appstate::AppState;
+use crate::{
+	api::{ApiResponse, internal_error},
+	appstate::AppState,
+};
 use aleym_core::db::{
 	DirectoryBasedNewsFilter, DirectoryOrCategoriesBasedNewsFilter, NewsFilter, SortOrder, TIME_MAX, TIME_MIN,
 	time::OffsetDateTime, uuid::Uuid,
@@ -17,6 +20,7 @@ pub struct SimpleArticle {
 	pub title: String,
 	pub uri: Option<String>,
 	pub last_fetched_at: i64,
+	pub published_at: Option<i64>,
 	pub is_read: bool,
 }
 
@@ -49,13 +53,31 @@ pub struct ArticleQuery {
 	pub category_id: Option<Uuid>,
 }
 
-// no idea if this works, for now it doesn't allow for filtering multiple categories at the same time even though the core supports it
-// the filter gives priority to source filtering over category filtering
-// if neither source or category filtering is active then defaults to grabbing everything from the root directory (basically just grab every article that matches the other time and limit filters)
+/// Retrieves a paginated list of simple articles with optional filtering and sorting
+///
+/// # Query Parameters
+/// - `limit` - maximum number of articles to return, defaults to `50`
+/// - `after` - unix timestamp, only return articles fetched after this time, defaults to the earliest possible time
+/// - `before` - unix timestamp, only return articles fetched before this time, defaults to the latest possible time
+/// - `sort_order` - `"asc"` or `"desc"`, defaults to `"asc"`
+/// - `source_id` - UUID, filter articles by a specific source (takes priority over `category_id`)
+/// - `category_id` - UUID, filter articles by a specific category
+///
+/// If neither `source_id` nor `category_id` is provided, returns all articles from the root directory.
+///
+/// # Response
+/// The articles in the returned list are simplified and do not contain all the information of the article.
+///
+/// Returned articles only contains the data in fields in `SimpleArticle`
+///
+/// | Status Code | Description |
+/// |-------------|-------------|
+/// | `200 OK` | Returns a Json list of articles matching the query |
+/// | `500 Internal Server Error` | Failed to retrieve articles |
 pub async fn get_articles(
 	State(state): State<Arc<AppState>>,
 	Query(params): Query<ArticleQuery>,
-) -> Json<Vec<SimpleArticle>> {
+) -> ApiResponse<Json<Vec<SimpleArticle>>> {
 	let cursor_after = OffsetDateTime::from_unix_timestamp(params.after.unwrap_or(TIME_MIN.unix_timestamp())).unwrap();
 
 	let cursor_before =
@@ -81,7 +103,7 @@ pub async fn get_articles(
 			.storage
 			.get_root_directories()
 			.await
-			.unwrap()
+			.map_err(internal_error)?
 			.pop()
 			.unwrap()
 			.id;
@@ -99,7 +121,7 @@ pub async fn get_articles(
 		.storage
 		.get_news_with_source_filter(filter, sort_order, cursor_after, cursor_before, limit)
 		.await
-		.unwrap()
+		.map_err(internal_error)?
 		.into_iter()
 		.map(|a| SimpleArticle {
 			id: a.id,
@@ -107,17 +129,29 @@ pub async fn get_articles(
 			title: a.title,
 			uri: a.uri,
 			last_fetched_at: a.last_fetched_at.unix_timestamp(),
+			published_at: a.published_at.map(|time| time.unix_timestamp()),
 			is_read: a.is_read,
 		})
 		.collect();
 
-	Json(articles)
+	Ok(Json(articles))
 }
 
-// UNTESTED
-pub async fn get_article_by_id(State(state): State<Arc<AppState>>, Path(id): Path<Uuid>) -> Json<Article> {
-	let article = state.repr.storage.get_news(id).await.unwrap();
-	Json(Article {
+/// Retrieves a single detailed article by its UUID
+///
+/// # Path Parameters
+/// - `id` - UUID of the article to retrieve
+///
+/// # Response
+/// The returned article is more detailed compared to `SimpleArticle`, contains all data in `Article fields`.
+///
+/// | Status Code | Description |
+/// |-------------|-------------|
+/// | `200 OK` | Returns the full article including content |
+/// | `500 Internal Server Error` | Failed to retrieve article |
+pub async fn get_article_by_id(State(state): State<Arc<AppState>>, Path(id): Path<Uuid>) -> ApiResponse<Json<Article>> {
+	let article = state.repr.storage.get_news(id).await.map_err(internal_error)?;
+	Ok(Json(Article {
 		id: article.id,
 		source: article.source,
 		title: article.title,
@@ -126,5 +160,5 @@ pub async fn get_article_by_id(State(state): State<Arc<AppState>>, Path(id): Pat
 		last_fetched_at: article.last_fetched_at.unix_timestamp(),
 		published_at: article.published_at.map(|time| time.unix_timestamp()),
 		is_read: article.is_read,
-	})
+	}))
 }

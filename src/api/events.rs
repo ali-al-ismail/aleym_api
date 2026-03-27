@@ -15,7 +15,21 @@ pub enum EventType {
 	//Success,
 }
 
-// sends events of type EventType via the /sse endpoint
+/// SSE Endpoint handler
+///
+/// This endpoint provides a stream of events
+///
+/// # Response
+/// ```json
+/// {
+/// "type":"Event Type"
+/// }
+/// ```
+///
+/// # Event Types
+/// `Update` - Indicates that new articles have been successfully fetched and that the client should get them.
+///
+/// `Failure` - Indicates that an error has occured while fetching articles from a source.
 pub async fn events_handler(State(state): State<Arc<AppState>>) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
 	let event_rx = state.event_tx.subscribe();
 	let stream = BroadcastStream::new(event_rx).filter_map(|result| async {
