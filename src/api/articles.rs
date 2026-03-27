@@ -19,6 +19,7 @@ pub struct SimpleArticle {
 	pub source: Uuid,
 	pub title: String,
 	pub uri: Option<String>,
+	pub first_fetched_at: i64,
 	pub last_fetched_at: i64,
 	pub published_at: Option<i64>,
 	pub is_read: bool,
@@ -31,6 +32,7 @@ pub struct Article {
 	pub title: String,
 	pub uri: Option<String>,
 	pub content: Option<String>,
+	pub first_fetched_at: i64,
 	pub last_fetched_at: i64,
 	pub published_at: Option<i64>,
 	pub is_read: bool,
@@ -85,7 +87,7 @@ pub async fn get_articles(
 
 	let limit = params.limit.unwrap_or(50);
 
-	let sort_order = match params.sort_order.unwrap_or(SortOrderQuery::Asc) {
+	let sort_order = match params.sort_order.unwrap_or(SortOrderQuery::Desc) {
 		SortOrderQuery::Asc => SortOrder::Asc,
 		SortOrderQuery::Desc => SortOrder::Desc,
 	};
@@ -128,6 +130,7 @@ pub async fn get_articles(
 			source: a.source,
 			title: a.title,
 			uri: a.uri,
+			first_fetched_at: a.first_fetched_at.unix_timestamp(),
 			last_fetched_at: a.last_fetched_at.unix_timestamp(),
 			published_at: a.published_at.map(|time| time.unix_timestamp()),
 			is_read: a.is_read,
@@ -157,6 +160,7 @@ pub async fn get_article_by_id(State(state): State<Arc<AppState>>, Path(id): Pat
 		title: article.title,
 		uri: article.uri,
 		content: article.content,
+		first_fetched_at: article.first_fetched_at.unix_timestamp(),
 		last_fetched_at: article.last_fetched_at.unix_timestamp(),
 		published_at: article.published_at.map(|time| time.unix_timestamp()),
 		is_read: article.is_read,
