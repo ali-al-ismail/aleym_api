@@ -46,6 +46,10 @@ You should have received a copy of the GNU Affero General Public License along w
 
 </p>
 
+## Documentation
+
+To see all the API's endpoints go [here.](./docs.md)
+
 ## Core Library
 
 For the Core Library of Aleym, see <https://github.com/zefr0x/aleym_core>.
