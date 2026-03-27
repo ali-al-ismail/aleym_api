@@ -345,7 +345,7 @@ Retrieves a paginated list of articles with optional filtering and sorting.
 | `limit` | No | Maximum number of articles to return, defaults to `50` |
 | `after` | No | Unix timestamp, only return articles fetched after this time |
 | `before` | No | Unix timestamp, only return articles fetched before this time |
-| `sort_order` | No | `"asc"` or `"desc"`, defaults to `"asc"` |
+| `sort_order` | No | Sort based on `first_fetched_at` either `"asc"` or `"desc"`, defaults to `"desc"` |
 | `source_id` | No | Filter by a specific source UUID (takes priority over `category_id`) |
 | `category_id` | No | Filter by a specific category UUID |
 
@@ -365,6 +365,7 @@ If neither `source_id` nor `category_id` is provided, returns all articles from 
         "source": "uuid",
         "title": "article title",
         "uri": "article uri or null",
+        "first_fetched_at": 1234567890,
         "last_fetched_at": 1234567890,
         "published_at": 1234567890,
         "is_read": false
@@ -396,6 +397,7 @@ Retrieves a single article by its UUID, including its full content.
     "title": "article title",
     "uri": "article uri or null",
     "content": "full article content or null",
+    "first_fetched_at": 1234567890,
     "last_fetched_at": 1234567890,
     "published_at": 1234567890,
     "is_read": false
