@@ -1,5 +1,4 @@
 /target
-/Cargo.lock
 /web
 /server.toml
 aleym.db
