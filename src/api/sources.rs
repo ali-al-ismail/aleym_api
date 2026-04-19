@@ -352,6 +352,25 @@ pub async fn unlink_source_to_category(
 	Ok(StatusCode::OK)
 }
 
+/// Triggers the informant to fetch news for a specific source manually
+///
+/// # Path Parameters
+/// - `id` - UUID of the source to fetch
+///
+/// # Response
+/// | Status Code | Description |
+/// |-------------|-------------|
+/// | `200 OK` | Fetch triggered successfully |
+/// | `500 Internal Server Error` | Failed to trigger fetch |
+pub async fn manual_fetch(State(state): State<Arc<AppState>>, Path(id): Path<Uuid>) -> ApiResponse<StatusCode> {
+	state
+		.repr
+		.trigger_informant_by_source(id)
+		.await
+		.map_err(internal_error)?;
+	Ok(StatusCode::OK)
+}
+
 impl From<NetworkType> for InterfaceType {
 	fn from(value: NetworkType) -> Self {
 		match value {

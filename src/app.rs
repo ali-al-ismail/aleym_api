@@ -4,7 +4,7 @@ use crate::api::events::events_handler;
 use crate::api::feedback::process_feedback;
 use crate::api::sources::{
 	create_source, delete_source, get_source_by_id, get_source_categories, get_sources, get_sources_by_category,
-	link_source_to_category, unlink_source_to_category, update_source,
+	link_source_to_category, manual_fetch, unlink_source_to_category, update_source,
 };
 use crate::appstate::AppState;
 use axum::routing::{get, post, put};
@@ -31,7 +31,8 @@ impl App {
 			.route(
 				"/sources/{source_id}/categories/{category_id}",
 				post(link_source_to_category).delete(unlink_source_to_category),
-			);
+			)
+			.route("/sources/{id}/fetch", get(manual_fetch));
 
 		let categories_routes = axum::Router::new()
 			.route("/categories", get(get_categories).post(create_category))
