@@ -3,8 +3,7 @@ use crate::{
 	appstate::AppState,
 };
 use aleym_core::db::{
-	DirectoryBasedNewsFilter, DirectoryOrCategoriesBasedNewsFilter, NewsFilter, SortOrder, TIME_MAX, TIME_MIN,
-	time::OffsetDateTime, uuid::Uuid,
+	DirectoryBasedNewsFilter, NewsFilter, SortOrder, TIME_MAX, TIME_MIN, time::OffsetDateTime, uuid::Uuid,
 };
 use axum::{
 	Json,
@@ -88,17 +87,17 @@ pub async fn get_articles(
 	let limit = params.limit.unwrap_or(50);
 
 	let sort_order = match params.sort_order.unwrap_or(SortOrderQuery::Desc) {
-		SortOrderQuery::Asc => SortOrder::Asc,
-		SortOrderQuery::Desc => SortOrder::Desc,
+		SortOrderQuery::Asc => SortOrder::Ascending,
+		SortOrderQuery::Desc => SortOrder::Descending,
 	};
 
 	let filter = if let Some(source_id) = params.source_id {
 		NewsFilter::Source(source_id)
 	} else if let Some(category_id) = params.category_id {
-		NewsFilter::DirectoryOrCategories(DirectoryOrCategoriesBasedNewsFilter {
+		NewsFilter::DirectoryOrCategories {
 			directory: None,
 			categories: vec![category_id],
-		})
+		}
 	} else {
 		let root_dir_uuid = state
 			.repr
@@ -109,13 +108,13 @@ pub async fn get_articles(
 			.pop()
 			.unwrap()
 			.id;
-		NewsFilter::DirectoryOrCategories(DirectoryOrCategoriesBasedNewsFilter {
+		NewsFilter::DirectoryOrCategories {
 			directory: Some(DirectoryBasedNewsFilter {
 				parent_directory: root_dir_uuid,
 				recursive: true,
 			}),
 			categories: vec![],
-		})
+		}
 	};
 
 	let articles = state
