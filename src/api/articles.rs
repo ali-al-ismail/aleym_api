@@ -153,6 +153,13 @@ pub async fn get_articles(
 /// | `500 Internal Server Error` | Failed to retrieve article |
 pub async fn get_article_by_id(State(state): State<Arc<AppState>>, Path(id): Path<Uuid>) -> ApiResponse<Json<Article>> {
 	let article = state.repr.storage.get_news(id).await.map_err(internal_error)?;
+	state
+		.repr
+		.storage
+		.set_news_read(vec![article.id], true)
+		.await
+		.map_err(internal_error)?;
+
 	Ok(Json(Article {
 		id: article.id,
 		source: article.source,
