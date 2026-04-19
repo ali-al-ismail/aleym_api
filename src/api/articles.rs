@@ -169,6 +169,6 @@ pub async fn get_article_by_id(State(state): State<Arc<AppState>>, Path(id): Pat
 		first_fetched_at: article.first_fetched_at.unix_timestamp(),
 		last_fetched_at: article.last_fetched_at.unix_timestamp(),
 		published_at: article.published_at.map(|time| time.unix_timestamp()),
-		is_read: article.is_read,
+		is_read: true,
 	}))
 }
