@@ -55,6 +55,11 @@ pub struct ArticleQuery {
 	pub query: Option<String>,
 }
 
+#[derive(Deserialize)]
+pub struct RecommendationQuery {
+	pub limit: Option<u64>,
+}
+
 /// Retrieves a paginated list of simple articles with optional filtering and sorting
 ///
 /// # Query Parameters
@@ -181,4 +186,44 @@ pub async fn get_article_by_id(State(state): State<Arc<AppState>>, Path(id): Pat
 		published_at: article.published_at.map(|time| time.unix_timestamp()),
 		is_read: true,
 	}))
+}
+
+/// Retrieves a list of recommended articles
+///
+/// # Path Parameters
+/// - `limit` - maximum number of articles to return, defaults to `50`
+///
+/// # Response
+/// The articles in the returned list are simplified and do not contain all the information of the article.
+///
+/// Returned articles only contains the data in fields in `SimpleArticle`
+/// | Status Code | Description |
+/// |-------------|-------------|
+/// | `200 OK` | Returns a Json list of recommended articles |
+/// | `500 Internal Server Error` | Failed to retrieve articles |
+pub async fn recommend_articles(
+	State(state): State<Arc<AppState>>,
+	Query(limit): Query<RecommendationQuery>,
+) -> ApiResponse<Json<Vec<SimpleArticle>>> {
+	let limit = limit.limit.unwrap_or(50);
+
+	let articles = state
+		.repr
+		.storage
+		.get_news_recommendations(limit)
+		.await
+		.map_err(internal_error)?
+		.into_iter()
+		.map(|a| SimpleArticle {
+			id: a.id,
+			source: a.source,
+			title: a.title,
+			uri: a.uri,
+			first_fetched_at: a.first_fetched_at.unix_timestamp(),
+			last_fetched_at: a.last_fetched_at.unix_timestamp(),
+			published_at: a.published_at.map(|time| time.unix_timestamp()),
+			is_read: a.is_read,
+		})
+		.collect::<Vec<SimpleArticle>>();
+	Ok(Json(articles))
 }

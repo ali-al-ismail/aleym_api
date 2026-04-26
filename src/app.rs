@@ -1,4 +1,4 @@
-use crate::api::articles::{get_article_by_id, get_articles};
+use crate::api::articles::{get_article_by_id, get_articles, recommend_articles};
 use crate::api::categories::{create_category, delete_category, get_categories, update_category};
 use crate::api::events::events_handler;
 use crate::api::feedback::process_feedback;
@@ -44,11 +44,13 @@ impl App {
 			.route("/articles/{id}", get(get_article_by_id));
 
 		let feedback_routes = axum::Router::new().route("/feedback", post(process_feedback));
+		let recommendation_route = axum::Router::new().route("/recommend", get(recommend_articles));
 
 		let api_routes = source_routes
 			.merge(categories_routes)
 			.merge(articles_routes)
-			.merge(feedback_routes);
+			.merge(feedback_routes)
+			.merge(recommendation_route);
 
 		axum::Router::new()
 			.nest("/api", api_routes)
