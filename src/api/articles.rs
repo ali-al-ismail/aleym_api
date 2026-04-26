@@ -3,14 +3,14 @@ use crate::{
 	appstate::AppState,
 };
 use aleym_core::db::{
-	DirectoryBasedNewsFilter, NewsFilter, SortOrder, TIME_MAX, TIME_MIN, time::OffsetDateTime, uuid::Uuid,
+	BySourceDirectory, BySources, NewsFilter, SortOrder, TIME_MAX, TIME_MIN, time::OffsetDateTime, uuid::Uuid,
 };
 use axum::{
 	Json,
 	extract::{Path, Query, State},
 };
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
+use std::{sync::Arc, vec};
 
 #[derive(Serialize, Deserialize)]
 pub struct SimpleArticle {
@@ -52,6 +52,7 @@ pub struct ArticleQuery {
 	pub sort_order: Option<SortOrderQuery>,
 	pub source_id: Option<Uuid>,
 	pub category_id: Option<Uuid>,
+	pub query: Option<String>,
 }
 
 /// Retrieves a paginated list of simple articles with optional filtering and sorting
@@ -63,8 +64,8 @@ pub struct ArticleQuery {
 /// - `sort_order` - `"asc"` or `"desc"`, defaults to `"asc"`
 /// - `source_id` - UUID, filter articles by a specific source (takes priority over `category_id`)
 /// - `category_id` - UUID, filter articles by a specific category
-///
-/// If neither `source_id` nor `category_id` is provided, returns all articles from the root directory.
+/// - `query` - string, text search query
+///   If neither `source_id` nor `category_id` is provided, returns all articles from the root directory.
 ///
 /// # Response
 /// The articles in the returned list are simplified and do not contain all the information of the article.
@@ -92,11 +93,17 @@ pub async fn get_articles(
 	};
 
 	let filter = if let Some(source_id) = params.source_id {
-		NewsFilter::Source(source_id)
+		NewsFilter {
+			sources: Some(BySources::Identifiers(vec![source_id])),
+			text: params.query.clone(),
+		}
 	} else if let Some(category_id) = params.category_id {
-		NewsFilter::DirectoryOrCategories {
-			directory: None,
-			categories: vec![category_id],
+		NewsFilter {
+			sources: Some(BySources::Scope {
+				directory: None,
+				categories: vec![category_id],
+			}),
+			text: params.query.clone(),
 		}
 	} else {
 		let root_dir_uuid = state
@@ -108,19 +115,22 @@ pub async fn get_articles(
 			.pop()
 			.unwrap()
 			.id;
-		NewsFilter::DirectoryOrCategories {
-			directory: Some(DirectoryBasedNewsFilter {
-				parent_directory: root_dir_uuid,
-				recursive: true,
+		NewsFilter {
+			sources: Some(BySources::Scope {
+				directory: Some(BySourceDirectory {
+					parent_directory: root_dir_uuid,
+					recursive: true,
+				}),
+				categories: vec![],
 			}),
-			categories: vec![],
+			text: params.query.clone(),
 		}
 	};
 
 	let articles = state
 		.repr
 		.storage
-		.get_news_with_source_filter(filter, sort_order, cursor_after, cursor_before, limit)
+		.get_news_with_filter(filter, sort_order, cursor_after, cursor_before, limit)
 		.await
 		.map_err(internal_error)?
 		.into_iter()

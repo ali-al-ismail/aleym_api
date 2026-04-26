@@ -72,7 +72,7 @@ dependencies = [
 [[package]]
 name = "aleym_core"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/zefr0x/aleym_core.git#b5a4a96de40fd4916563cb08558157b1f38ba2a6"
+source = "git+https://github.com/zefr0x/aleym_core.git#3d26af5d22e2809e44fbb3339b1138d770d5bbd8"
 dependencies = [
  "arti-client",
  "cfg-if",
