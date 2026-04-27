@@ -7,6 +7,7 @@ edition = "2024"
 aleym_core = { git = "https://github.com/zefr0x/aleym_core.git", features = ["full"] }
 axum = { version = "0.8.8", features = ["macros"] }
 axum-embed = "0.1.0"
+dirs = "6.0.0"
 futures = "0.3.32"
 rust-embed = "8.11.0"
 sea-orm = {version = "2.0.0-rc.32"}

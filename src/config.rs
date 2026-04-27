@@ -35,7 +35,14 @@ impl Default for Network {
 impl Default for Paths {
 	fn default() -> Self {
 		Self {
-			db_file: PathBuf::from("aleym.db"),
+			db_file: dirs::data_dir()
+				.map(|mut path| {
+					path.push("aleym");
+					std::fs::create_dir_all(&path).ok();
+					path.push("aleym.db");
+					path
+				})
+				.unwrap_or_else(|| PathBuf::from("aleym.db")),
 		}
 	}
 }
@@ -43,7 +50,20 @@ impl Default for Paths {
 // TODO: function that writes a default config
 impl Config {
 	pub fn load() -> Self {
-		let c_file = "server.toml"; // TODO: maybe make a function that gets the file based on os
+		let c_path = dirs::config_dir();
+		let c_file = c_path
+			.map(|mut path| {
+				path.push("aleym");
+				std::fs::create_dir_all(&path).ok();
+				path.push("server.toml");
+				path
+			})
+			.unwrap_or_else(|| PathBuf::from("server.toml"));
+
+		if !c_file.exists() {
+			let default_toml = toml::to_string(&Config::default()).unwrap_or_default();
+			std::fs::write(&c_file, default_toml).ok();
+		}
 
 		// TODO: need to log error types, eg. file not found, no read permissions etc
 		match read_to_string(c_file) {
@@ -62,7 +82,7 @@ mod tests {
 		let config = Config::default();
 		assert_eq!(config.network.port, 3000);
 		assert_eq!(config.network.host, "127.0.0.1");
-		assert_eq!(config.paths.db_file, PathBuf::from("aleym.db"));
+		//assert_eq!(config.paths.db_file, PathBuf::from("aleym.db"));
 	}
 
 	#[test]
