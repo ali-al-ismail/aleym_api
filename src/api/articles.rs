@@ -62,6 +62,11 @@ pub struct RecommendationQuery {
 	pub limit: Option<u64>,
 }
 
+#[derive(Deserialize)]
+pub struct ReadFlagQuery {
+	pub is_read: bool,
+}
+
 /// Retrieves a paginated list of simple articles with optional filtering and sorting
 ///
 /// # Query Parameters
@@ -171,13 +176,6 @@ pub async fn get_articles(
 /// | `500 Internal Server Error` | Failed to retrieve article |
 pub async fn get_article_by_id(State(state): State<Arc<AppState>>, Path(id): Path<Uuid>) -> ApiResponse<Json<Article>> {
 	let article = state.repr.storage.get_news(id).await.map_err(internal_error)?;
-	state
-		.repr
-		.storage
-		.set_news_read(vec![article.id], true)
-		.await
-		.map_err(internal_error)?;
-
 	Ok(Json(Article {
 		id: article.id,
 		source: article.source,
@@ -188,7 +186,7 @@ pub async fn get_article_by_id(State(state): State<Arc<AppState>>, Path(id): Pat
 		first_fetched_at: article.first_fetched_at.unix_timestamp(),
 		last_fetched_at: article.last_fetched_at.unix_timestamp(),
 		published_at: article.published_at.map(|time| time.unix_timestamp()),
-		is_read: true,
+		is_read: article.is_read,
 	}))
 }
 
@@ -231,4 +229,18 @@ pub async fn recommend_articles(
 		})
 		.collect::<Vec<SimpleArticle>>();
 	Ok(Json(articles))
+}
+
+pub async fn set_read_flag(
+	State(state): State<Arc<AppState>>,
+	Path(id): Path<Uuid>,
+	Query(is_read): Query<ReadFlagQuery>,
+) -> ApiResponse<()> {
+	state
+		.repr
+		.storage
+		.set_news_read(vec![id], is_read.is_read)
+		.await
+		.map_err(internal_error)?;
+	Ok(())
 }
