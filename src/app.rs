@@ -8,8 +8,13 @@ use crate::api::sources::{
 };
 use crate::appstate::AppState;
 use axum::routing::{get, post, put};
+use axum_embed::{FallbackBehavior, ServeEmbed};
+use rust_embed::RustEmbed;
 use std::sync::Arc;
-use tower_http::services::{ServeDir, ServeFile};
+
+#[derive(RustEmbed, Clone)]
+#[folder = "web/dist/"]
+struct Assets;
 
 pub struct App {
 	pub state: Arc<AppState>,
@@ -52,10 +57,16 @@ impl App {
 			.merge(feedback_routes)
 			.merge(recommendation_route);
 
+		let assets = ServeEmbed::<Assets>::with_parameters(
+			Some("index.html".to_string()),
+			FallbackBehavior::Ok,
+			Some("index.html".to_string()),
+		);
+
 		axum::Router::new()
 			.nest("/api", api_routes)
 			.route("/events", get(events_handler))
 			.with_state(self.state.clone())
-			.fallback_service(ServeDir::new("web/dist").not_found_service(ServeFile::new("web/dist/index.html")))
+			.fallback_service(assets)
 	}
 }

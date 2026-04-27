@@ -40,21 +40,6 @@ async fn main() {
 	let repr = Arc::new(repr);
 	let appstate = appstate::AppState::new(repr);
 	let event_tx = appstate.event_tx.clone();
-	/* // new thread for events from the core
-	tokio::spawn(async move {
-		while let Some(event) = event_rx.recv().await {
-			let core_event = match event {
-				Event::NewsUpdated { .. } => EventType::Update,
-				Event::InformantError { .. } => EventType::Failure,
-			};
-			let _ = event_tx.send(core_event);
-		}
-	});
-
-	let repr = appstate.repr.clone(); // need this thing so tokio doesn't steal repr ownership from appstate
-	tokio::spawn(async move {
-		repr.start_scheduler().await.unwrap();
-	}); */
 
 	let repr = appstate.repr.clone();
 	let app = App::new(appstate);
