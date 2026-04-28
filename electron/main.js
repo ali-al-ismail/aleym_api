@@ -1,10 +1,16 @@
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, Tray, Menu, nativeImage } = require('electron')
 const { spawn } = require('child_process')
 const path = require('path')
 const net = require('net')
 const fs = require('fs')
 
 let backendProcess
+let tray
+let win
+app.setName('Aleym')
+const { shell } = require('electron')
+
+
 
 function getNetworkConfig() {
   const configPath = path.join(app.getPath('appData'), 'aleym', 'server.toml')
@@ -26,11 +32,45 @@ function waitForPort(port, host, retries = 20) {
       const sock = net.createConnection(port, host)
       sock.once('connect', () => { sock.destroy(); resolve() })
       sock.once('error', () => {
-        if (retries-- <= 0) return reject(new Error('Backend did not start'))
+        if (retries-- <= 0) return reject(new Error("aleym_api failed to start"))
         setTimeout(attempt, 300)
       })
     }
     attempt()
+  })
+}
+
+function createTray() {
+  const iconFile = process.platform === 'darwin' ? 'trayTemplate.png' : 'tray.png'
+  const icon = nativeImage.createFromPath(path.join(__dirname, iconFile))
+  if (process.platform === 'darwin') {
+    icon.setTemplateImage(true)
+  }
+  tray = new Tray(icon)
+
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Open',
+      click: () => {
+        win.show()
+        win.focus()
+      }
+    },
+    {
+      label: 'Quit',
+      click: () => {
+        app.isQuiting = true
+        app.quit()
+      }
+    }
+  ])
+
+  tray.setToolTip('Aleym')
+  tray.setContextMenu(contextMenu)
+
+  tray.on('click', () => {
+    win.show()
+    win.focus()
   })
 }
 
@@ -47,8 +87,30 @@ app.on('ready', async () => {
 
   await waitForPort(port, host)
 
-  const win = new BrowserWindow({ width: 1280, height: 800, autoHideMenuBar: true })
+  win = new BrowserWindow({ width: 1280, height: 800, autoHideMenuBar: true, icon: path.join(__dirname, 'icon.png') })
   win.loadURL(`http://${host}:${port}`)
+
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url)
+    return { action: 'deny' }
+  })
+
+  win.webContents.on('will-navigate', (event, url) => {
+    if (!url.startsWith(`http://${host}:${port}`)) {
+      event.preventDefault()
+      shell.openExternal(url)
+    }
+  })
+
+  win.on('close', (e) => {
+    if (!app.isQuiting) {
+      e.preventDefault()
+      win.hide()
+    }
+  })
+
+  Menu.setApplicationMenu(null)
+  createTray()
 })
 
 app.on('will-quit', () => {

@@ -10,8 +10,9 @@
     "electron-builder": "^26.8.1"
   },
   "build": {
-    "appId": "com.aleym.app",
+    "appId": "io.github.NezarAltarouti.AlyemUI",
     "productName": "Aleym",
+    "icon": "icon.png",
     "mac": {
       "identity": null,
       "target": "zip"
@@ -20,7 +21,8 @@
       "target": "portable"
     },
     "linux": {
-      "target": "AppImage"
+      "target": "AppImage",
+      "executableName": "Aleym"
     },
    "extraResources": [
   {
