@@ -47,7 +47,7 @@ function createTray() {
     icon.setTemplateImage(true)
   }
   tray = new Tray(icon)
-
+  
   const contextMenu = Menu.buildFromTemplate([
     {
       label: 'Open',
@@ -62,7 +62,17 @@ function createTray() {
         app.isQuiting = true
         app.quit()
       }
-    }
+    },
+    ...(process.platform != 'linux' ? [{
+      label: 'Launch on Startup',
+      type: 'checkbox',
+      checked: app.getLoginItemSettings().openAtLogin,
+      click: () => {
+        app.setLoginItemSettings({
+          openAtLogin: !app.getLoginItemSettings().openAtLogin
+        })
+      }
+    }] : [])
   ])
 
   tray.setToolTip('Aleym')
