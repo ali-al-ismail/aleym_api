@@ -2,3 +2,6 @@
 /web
 /server.toml
 aleym.db
+/electron/dist
+/electron/node_modules
+/electron/bin
