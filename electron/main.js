@@ -76,8 +76,8 @@ function waitForPort(port, host, retries = 20) {
 
 function createTray() {
   const iconFile = process.platform === "darwin"
-    ? "trayTemplate.png"
-    : "tray.png";
+    ? "icons/trayTemplate.png"
+    : "icons/tray.png";
   const icon = nativeImage.createFromPath(path.join(__dirname, iconFile));
   if (process.platform === "darwin") {
     icon.setTemplateImage(true);
@@ -85,23 +85,6 @@ function createTray() {
   tray = new Tray(icon);
 
   const contextMenu = Menu.buildFromTemplate([
-    {
-      label: "Open",
-      click: () => {
-        win.show();
-        win.focus();
-      },
-    },
-    {
-      label: "Quit",
-      click: () => {
-        app.isQuiting = true;
-        app.quit();
-      },
-    },
-    {
-      type: "separator",
-    },
     {
       label: "Check for Updates",
       click: () => {
@@ -120,6 +103,23 @@ function createTray() {
         },
       }]
       : []),
+    {
+      type: "separator",
+    },
+    {
+      label: "Open",
+      click: () => {
+        win.show();
+        win.focus();
+      },
+    },
+    {
+      label: "Quit",
+      click: () => {
+        app.isQuiting = true;
+        app.quit();
+      },
+    },
   ]);
 
   tray.setToolTip("Aleym");
@@ -150,7 +150,7 @@ app.on("ready", async () => {
     width: 1280,
     height: 800,
     autoHideMenuBar: true,
-    icon: path.join(__dirname, "icon.png"),
+    icon: path.join(__dirname, "icons", "icon.png"),
   });
   win.loadURL(`http://${host}:${port}`);
 

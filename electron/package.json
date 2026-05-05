@@ -1,7 +1,9 @@
 {
   "name": "aleym",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "main": "main.js",
+  "description": "News Aggregation and Knowledge-base System",
+  "author": {"name": "Aleym Team"},
   "scripts": {
     "build": "electron-builder"
   },
@@ -12,24 +14,29 @@
   "build": {
     "appId": "io.github.NezarAltarouti.AlyemUI",
     "productName": "Aleym",
-    "icon": "icon.png",
+    "icon": "icons/icon.png",
     "mac": {
       "identity": null,
-      "target": "zip"
+      "target": {
+        "target": "dmg",
+        "arch": ["x64"]
+      }
     },
     "win": {
       "target": "portable"
     },
     "linux": {
       "target": "AppImage",
-      "executableName": "Aleym"
+      "executableName": "aleym",
+      "category": "Internet",
+      "icon": "icons"
     },
-   "extraResources": [
-  {
-    "from": "./bin/",
-    "to": ".",
-    "filter": ["aleym_api*"]
-  }
+    "extraResources": [
+      {
+        "from": "./bin/",
+        "to": ".",
+        "filter": ["aleym_api*"]
+      }
     ]
   }
 }

@@ -21,7 +21,7 @@ jobs:
           - os: macos-latest
             rust-target: x86_64-apple-darwin
             binary: aleym_api
-            electron-output: dist/*.zip
+            electron-output: dist/*.dmg
 
           - os: windows-latest
             rust-target: x86_64-pc-windows-msvc
