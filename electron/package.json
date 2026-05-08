@@ -12,7 +12,7 @@
     "electron-builder": "^26.8.1"
   },
   "build": {
-    "appId": "io.github.NezarAltarouti.AlyemUI",
+    "appId": "io.github.NezarAltarouti.Aleym",
     "productName": "Aleym",
     "icon": "icons/icon.png",
     "mac": {
