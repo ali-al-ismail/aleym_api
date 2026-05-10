@@ -1,6 +1,6 @@
 {
   "name": "aleym",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "main": "main.js",
   "description": "News Aggregation and Knowledge-base System",
   "author": {"name": "Aleym Team"},
@@ -29,7 +29,18 @@
       "target": "AppImage",
       "executableName": "aleym",
       "category": "Internet",
-      "icon": "icons"
+      "icon": "icons",
+      "desktop": {
+        "entry": {
+        "Name": "Aleym Electron UI",
+        "Comment": "News Aggregation and Knowledge-base System",
+        "GenericName": "News Aggregator",
+        "Categories": "Network;",
+        "Keywords": "rss;atom;json;tor;privacy;",
+        "StartupWMClass": "aleym"
+      }
+    }
+    
     },
     "extraResources": [
       {
