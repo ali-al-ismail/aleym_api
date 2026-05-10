@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.5
+Type=Application
+Name=Aleym Electron UI
+Comment=News aggregation and knowledge-base platform
+GenericName=News Aggregator
+Exec=aleym
+SingleMainWindow=true
+Icon=io.github.NezarAltarouti.Aleym
+Terminal=false
+Categories=Network
+Keywords=rss;atom;json;tor;privacy
