@@ -48,11 +48,11 @@ function getNetworkConfig() {
     const port = content.match(/port\s*=\s*(\d+)/);
     const host = content.match(/host\s*=\s*"([^"]+)"/);
     return {
-      port: port ? parseInt(port[1]) : 3000,
+      port: port ? parseInt(port[1]) : 42795,
       host: host ? host[1] : "127.0.0.1",
     };
   }
-  return { port: 3000, host: "127.0.0.1" };
+  return { port: 42795, host: "127.0.0.1" };
 }
 
 function waitForPort(port, host, retries = 20) {

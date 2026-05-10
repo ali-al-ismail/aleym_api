@@ -26,7 +26,7 @@ pub struct Paths {
 impl Default for Network {
 	fn default() -> Self {
 		Self {
-			port: 3000,
+			port: 42795,
 			host: "127.0.0.1".into(),
 		}
 	}
@@ -80,7 +80,7 @@ mod tests {
 	#[test]
 	fn test_default_config() {
 		let config = Config::default();
-		assert_eq!(config.network.port, 3000);
+		assert_eq!(config.network.port, 42795);
 		assert_eq!(config.network.host, "127.0.0.1");
 		//assert_eq!(config.paths.db_file, PathBuf::from("aleym.db"));
 	}
