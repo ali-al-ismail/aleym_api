@@ -138,9 +138,12 @@ app.on("ready", async () => {
     : "aleym_api";
   const binaryPath = path.join(process.resourcesPath, binaryName);
 
+  const cwd = path.join(app.getPath("appData"), "aleym")
+  fs.mkdirSync(cwd, { recursive: true })
+
   backendProcess = spawn(binaryPath, [], {
-    cwd: path.join(app.getPath("appData"), "aleym"),
-  });
+    cwd: cwd
+  })
 
   backendProcess.stderr.on("data", (d) => console.error(d.toString()));
 
