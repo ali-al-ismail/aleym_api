@@ -4,13 +4,12 @@ version = "1.0.0"
 edition = "2024"
 
 [dependencies]
-aleym_core = { git = "https://github.com/zefr0x/aleym_core.git", features = ["full"] }
+aleym_core = { git = "https://github.com/zefr0x/aleym_core.git", features = ["full", "net_exposed_proxy_tor"] }
 axum = { version = "0.8.8", features = ["macros"] }
 axum-embed = "0.1.0"
 dirs = "6.0.0"
 futures = "0.3.32"
 rust-embed = "8.11.0"
-sea-orm = {version = "2.0.0-rc.32"}
 serde = { version = "1.0.228", features = ["derive"] }
 tokio = { version = "1.49.0", features = ["full"] }
 tokio-stream = { version = "0.1.18", features = ["sync"] }
