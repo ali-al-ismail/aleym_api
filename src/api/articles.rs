@@ -1,5 +1,5 @@
 use crate::{
-	api::{ApiResponse, internal_error},
+	api::{ApiResponse, internal_error, labels::Label},
 	appstate::AppState,
 };
 use aleym_core::db::{
@@ -8,6 +8,7 @@ use aleym_core::db::{
 use axum::{
 	Json,
 	extract::{Path, State},
+	http::StatusCode,
 };
 use axum_extra::extract::Query;
 use serde::{Deserialize, Serialize};
@@ -247,6 +248,51 @@ pub async fn recommend_articles(
 		})
 		.collect::<Vec<SimpleArticle>>();
 	Ok(Json(articles))
+}
+
+pub async fn get_labels_of_news(
+	State(state): State<Arc<AppState>>,
+	Path(id): Path<Uuid>,
+) -> ApiResponse<Json<Vec<Label>>> {
+	let labels = state
+		.repr
+		.storage
+		.get_labels_of_news(id)
+		.await
+		.map_err(internal_error)?
+		.into_iter()
+		.map(|l| Label {
+			id: l.id,
+			name: l.name,
+			description: l.description,
+		})
+		.collect();
+	Ok(Json(labels))
+}
+
+pub async fn link_label(
+	State(state): State<Arc<AppState>>,
+	Path((article_id, label_id)): Path<(Uuid, Uuid)>,
+) -> ApiResponse<StatusCode> {
+	state
+		.repr
+		.storage
+		.assign_label_to_news(article_id, label_id)
+		.await
+		.map_err(internal_error)?;
+	Ok(StatusCode::OK)
+}
+pub async fn unlink_label(
+	State(state): State<Arc<AppState>>,
+	Path((article_id, label_id)): Path<(Uuid, Uuid)>,
+) -> ApiResponse<StatusCode> {
+	state
+		.repr
+		.storage
+		.unassign_label_from_news(article_id, label_id)
+		.await
+		.map_err(internal_error)?;
+	Ok(StatusCode::OK)
 }
 
 pub async fn set_read_flag(

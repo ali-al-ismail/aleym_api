@@ -1,7 +1,10 @@
-use crate::api::articles::{get_article_by_id, get_articles, recommend_articles, set_read_flag};
+use crate::api::articles::{
+	get_article_by_id, get_articles, get_labels_of_news, link_label, recommend_articles, set_read_flag, unlink_label,
+};
 use crate::api::categories::{create_category, delete_category, get_categories, update_category};
 use crate::api::events::events_handler;
 use crate::api::feedback::process_feedback;
+use crate::api::labels::{create_label, delete_label, get_labels, update_label};
 use crate::api::sources::{
 	create_source, delete_source, get_source_by_id, get_source_categories, get_sources, get_sources_by_category,
 	link_source_to_category, manual_fetch, unlink_source_to_category, update_source,
@@ -47,7 +50,16 @@ impl App {
 		let articles_routes = axum::Router::new()
 			.route("/articles", get(get_articles))
 			.route("/articles/{id}", get(get_article_by_id))
-			.route("/articles/{id}/read", get(set_read_flag));
+			.route("/articles/{id}/read", get(set_read_flag))
+			.route("/articles/{id}/labels", get(get_labels_of_news))
+			.route(
+				"/articles/{id}/labels/{label_id}",
+				post(link_label).delete(unlink_label),
+			);
+
+		let labels_routes = axum::Router::new()
+			.route("/labels", get(get_labels).post(create_label))
+			.route("/labels/{id}", put(update_label).delete(delete_label));
 
 		let feedback_routes = axum::Router::new().route("/feedback", post(process_feedback));
 		let recommendation_route = axum::Router::new().route("/recommend", get(recommend_articles));
@@ -56,7 +68,8 @@ impl App {
 			.merge(categories_routes)
 			.merge(articles_routes)
 			.merge(feedback_routes)
-			.merge(recommendation_route);
+			.merge(recommendation_route)
+			.merge(labels_routes);
 
 		let assets = ServeEmbed::<Assets>::with_parameters(
 			Some("index.html".to_string()),

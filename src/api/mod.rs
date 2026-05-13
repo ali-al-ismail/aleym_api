@@ -4,6 +4,7 @@ pub mod articles;
 pub mod categories;
 pub mod events;
 pub mod feedback;
+pub mod labels;
 pub mod sources;
 
 pub type ApiResponse<T> = Result<T, (axum::http::StatusCode, String)>;
