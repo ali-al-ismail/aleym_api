@@ -7,8 +7,9 @@ use aleym_core::db::{
 };
 use axum::{
 	Json,
-	extract::{Path, Query, State},
+	extract::{Path, State},
 };
+use axum_extra::extract::Query;
 use serde::{Deserialize, Serialize};
 use std::{sync::Arc, vec};
 
@@ -53,9 +54,11 @@ pub struct ArticleQuery {
 	pub after: Option<i64>,
 	pub before: Option<i64>,
 	pub sort_order: Option<SortOrderQuery>,
-	pub source_id: Option<Uuid>,
-	pub category_id: Option<Uuid>,
+	pub source_id: Option<Vec<Uuid>>,
+	pub category_id: Option<Vec<Uuid>>,
 	pub query: Option<String>,
+	pub labels: Option<Vec<Uuid>>,
+	pub is_read: Option<bool>,
 }
 
 #[derive(Deserialize)]
@@ -74,10 +77,12 @@ pub struct ReadFlagQuery {
 /// - `limit` - maximum number of articles to return, defaults to `50`
 /// - `after` - unix timestamp, only return articles fetched after this time, defaults to the earliest possible time
 /// - `before` - unix timestamp, only return articles fetched before this time, defaults to the latest possible time
-/// - `sort_order` - `"asc"` or `"desc"`, defaults to `"asc"`
+/// - `sort_order` - `"asc"` or `"desc"`, defaults to `"desc"`
 /// - `source_id` - UUID, filter articles by a specific source (takes priority over `category_id`)
 /// - `category_id` - UUID, filter articles by a specific category
 /// - `query` - string, text search query
+/// - `labels` - UUID, filter articles that are tagged with the specified label
+/// - `is_read` - boolean, filter articles by read/unread status
 ///   If neither `source_id` nor `category_id` is provided, returns all articles from the root directory.
 ///
 /// # Response
@@ -107,16 +112,20 @@ pub async fn get_articles(
 
 	let filter = if let Some(source_id) = params.source_id {
 		NewsFilter {
-			sources: Some(BySources::Identifiers(vec![source_id])),
+			sources: Some(BySources::Identifiers(source_id)),
 			text: params.query.clone(),
+			labels: params.labels,
+			is_read: params.is_read,
 		}
 	} else if let Some(category_id) = params.category_id {
 		NewsFilter {
 			sources: Some(BySources::Scope {
 				directory: None,
-				categories: vec![category_id],
+				categories: Some(category_id),
 			}),
 			text: params.query.clone(),
+			labels: params.labels,
+			is_read: params.is_read,
 		}
 	} else {
 		let root_dir_uuid = state
@@ -134,9 +143,11 @@ pub async fn get_articles(
 					parent_directory: root_dir_uuid,
 					recursive: true,
 				}),
-				categories: vec![],
+				categories: None,
 			}),
 			text: params.query.clone(),
+			labels: params.labels,
+			is_read: params.is_read,
 		}
 	};
 
@@ -214,7 +225,11 @@ pub async fn recommend_articles(
 	let articles = state
 		.repr
 		.storage
-		.get_news_recommendations(limit)
+		.get_news_recommendations(
+			limit,
+			(limit * 4).max(100),
+			&aleym_core::ml::recommendation::Config::default(),
+		)
 		.await
 		.map_err(internal_error)?
 		.into_iter()

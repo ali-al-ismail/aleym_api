@@ -8,6 +8,7 @@ use std::{fs::read_to_string, path::PathBuf};
 pub struct Config {
 	pub network: Network,
 	pub paths: Paths,
+	pub ml: MLConfig,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -21,6 +22,13 @@ pub struct Network {
 #[serde(default)]
 pub struct Paths {
 	pub db_file: PathBuf,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(default)]
+pub struct MLConfig {
+	pub min_fetch_interval: i64,
+	pub max_fetch_interval: i64,
 }
 
 impl Default for Network {
@@ -43,6 +51,15 @@ impl Default for Paths {
 					path
 				})
 				.unwrap_or_else(|| PathBuf::from("aleym.db")),
+		}
+	}
+}
+
+impl Default for MLConfig {
+	fn default() -> Self {
+		Self {
+			min_fetch_interval: 360,
+			max_fetch_interval: 600,
 		}
 	}
 }

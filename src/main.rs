@@ -2,12 +2,13 @@ mod api;
 mod app;
 mod appstate;
 mod config;
-use aleym_core::Event;
-use aleym_core::Representative;
-use std::sync::Arc;
-
 use crate::api::events::EventType;
 use crate::app::App;
+use aleym_core::Event;
+use aleym_core::Representative;
+use aleym_core::db::StorageConnection;
+use aleym_core::db::time::Duration;
+use std::sync::Arc;
 
 #[tokio::main]
 async fn main() {
@@ -15,7 +16,10 @@ async fn main() {
 	let port: u16 = config.network.port;
 	let host = config.network.host;
 	let db_file = config.paths.db_file;
-
+	let ml_config = aleym_core::ml::scheduler::Config {
+		min_fetch_interval: Duration::seconds(config.ml.min_fetch_interval),
+		max_fetch_interval: Duration::seconds(config.ml.max_fetch_interval),
+	};
 	let mut repr = Representative::new(Some(db_file.as_path()))
 		.await
 		.expect("Couldn't create Aleym Representative");
@@ -37,6 +41,7 @@ async fn main() {
 
 	// set up rx and tx for events
 	let mut event_rx = repr.open_events_channel();
+	let notif = StorageConnection::open_notifications_channel(&mut repr.storage);
 	let repr = Arc::new(repr);
 	let appstate = appstate::AppState::new(repr);
 	let event_tx = appstate.event_tx.clone();
@@ -46,7 +51,7 @@ async fn main() {
 	let router = app.build();
 
 	tokio::join!(
-		async move { repr.start_scheduler().await.unwrap() },
+		async move { repr.start_scheduler(notif, ml_config).await.unwrap() },
 		async move {
 			while let Some(event) = event_rx.recv().await {
 				let event_type = match event {
