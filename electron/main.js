@@ -142,10 +142,11 @@ app.on("ready", async () => {
   fs.mkdirSync(cwd, { recursive: true })
 
   backendProcess = spawn(binaryPath, [], {
-    cwd: cwd
+    cwd: cwd,
   })
 
   backendProcess.stderr.on("data", (d) => console.error(d.toString()));
+  backendProcess.stdout.on("data", (d) => console.log(d.toString()));
 
   await waitForPort(port, host);
 

@@ -9,9 +9,14 @@ use aleym_core::Representative;
 use aleym_core::db::StorageConnection;
 use aleym_core::db::time::Duration;
 use std::sync::Arc;
-
+use tracing_subscriber::EnvFilter;
 #[tokio::main]
 async fn main() {
+	tracing_subscriber::fmt()
+		.with_env_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("warn")))
+		.with_target(true)
+		.init();
+
 	let config: config::Config = config::Config::load();
 	let port: u16 = config.network.port;
 	let host = config.network.host;
@@ -26,13 +31,13 @@ async fn main() {
 
 	// placeholder, should handle errors and inform the user via webgui before applying migrations
 	if repr.storage.has_pending_migrations().await.unwrap() {
-		println! {"Detected pending migrations, running..."};
+		tracing::warn!("Detected pending migrations, running...");
 		repr.storage.apply_migrations().await.unwrap();
 	}
 
 	// need to create a root source directory
 	if repr.storage.get_root_directories().await.unwrap().is_empty() {
-		println!("Creating root source directory...");
+		tracing::info!("Creating root source directory...");
 		repr.storage
 			.create_source_directory(None, "root".to_string(), None)
 			.await
@@ -57,7 +62,7 @@ async fn main() {
 				let event_type = match event {
 					Event::NewsUpdated { .. } => EventType::Update,
 					Event::InformantError { source_id: _, error } => {
-						println!("failed fetch to news from a source: {error}");
+						tracing::error!("failed fetch to news from a source: {error}");
 						EventType::Failure
 					}
 				};
@@ -65,7 +70,7 @@ async fn main() {
 			}
 		},
 		async move {
-			println!("Starting server on {}:{}", host, port);
+			tracing::warn!("Starting server at {}:{}", host, port);
 			let listener = tokio::net::TcpListener::bind(format!("{}:{}", host, port))
 				.await
 				.unwrap();
