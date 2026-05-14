@@ -80,7 +80,7 @@ async fn main() {
 		},
 		async move {
 			let proxy_addr = format!("127.0.0.1:{}", tor_proxy_port);
-			tracing::warn! {"Starting SOCKS5 proxy at {}", proxy_addr};
+			tracing::warn!("Starting SOCKS5 proxy at {}", proxy_addr);
 			proxy_repr.network.run_tor_socks5_proxy(proxy_addr).await.unwrap();
 		}
 	);
