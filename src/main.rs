@@ -19,6 +19,7 @@ async fn main() {
 
 	let config: config::Config = config::Config::load();
 	let port: u16 = config.network.port;
+	let tor_proxy_port: u16 = config.network.tor_proxy_port;
 	let host = config.network.host;
 	let db_file = config.paths.db_file;
 	let ml_config = aleym_core::ml::scheduler::Config {
@@ -51,12 +52,13 @@ async fn main() {
 	let appstate = appstate::AppState::new(repr);
 	let event_tx = appstate.event_tx.clone();
 
-	let repr = appstate.repr.clone();
+	let proxy_repr = appstate.repr.clone();
+	let sched_repr = appstate.repr.clone();
 	let app = App::new(appstate);
 	let router = app.build();
 
 	tokio::join!(
-		async move { repr.start_scheduler(notif, ml_config).await.unwrap() },
+		async move { sched_repr.start_scheduler(notif, ml_config).await.unwrap() },
 		async move {
 			while let Some(event) = event_rx.recv().await {
 				let event_type = match event {
@@ -75,6 +77,11 @@ async fn main() {
 				.await
 				.unwrap();
 			axum::serve(listener, router).await.unwrap();
+		},
+		async move {
+			let proxy_addr = format!("127.0.0.1:{}", tor_proxy_port);
+			tracing::warn! {"Starting SOCKS5 proxy at {}", proxy_addr};
+			proxy_repr.network.run_tor_socks5_proxy(proxy_addr).await.unwrap();
 		}
 	);
 }

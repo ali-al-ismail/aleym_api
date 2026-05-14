@@ -10,6 +10,10 @@ use crate::api::sources::{
 	link_source_to_category, manual_fetch, unlink_source_to_category, update_source,
 };
 use crate::appstate::AppState;
+use axum::body::Body;
+use axum::http::{Request, header};
+use axum::middleware::{self, Next};
+use axum::response::Response;
 use axum::routing::{get, post, put};
 use axum_embed::{FallbackBehavior, ServeEmbed};
 use rust_embed::RustEmbed;
@@ -80,7 +84,26 @@ impl App {
 		axum::Router::new()
 			.nest("/api", api_routes)
 			.route("/events", get(events_handler))
+			.layer(middleware::from_fn(csp))
 			.with_state(self.state.clone())
 			.fallback_service(assets)
 	}
+}
+
+async fn csp(request: Request<Body>, next: Next) -> Response {
+	let mut response = next.run(request).await;
+	response.headers_mut().insert(
+		header::CONTENT_SECURITY_POLICY,
+		"default-src 'self'; \
+         script-src 'self'; \
+         style-src 'self' 'unsafe-inline'; \
+         img-src 'self' data: https: http:; \
+         connect-src 'self' http://localhost:11434; \
+         font-src 'self' data:; \
+         media-src 'none'; \
+         object-src 'none'"
+			.parse()
+			.unwrap(),
+	);
+	response
 }

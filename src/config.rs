@@ -16,6 +16,7 @@ pub struct Config {
 pub struct Network {
 	pub port: u16,
 	pub host: String,
+	pub tor_proxy_port: u16,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -36,6 +37,7 @@ impl Default for Network {
 		Self {
 			port: 42795,
 			host: "127.0.0.1".into(),
+			tor_proxy_port: 48271,
 		}
 	}
 }
@@ -99,6 +101,7 @@ mod tests {
 		let config = Config::default();
 		assert_eq!(config.network.port, 42795);
 		assert_eq!(config.network.host, "127.0.0.1");
+		assert_eq!(config.network.tor_proxy_port, 48271);
 		//assert_eq!(config.paths.db_file, PathBuf::from("aleym.db"));
 	}
 
@@ -115,6 +118,7 @@ mod tests {
 		let config: Config = toml::from_str(toml_str).unwrap();
 		assert_eq!(config.network.port, 9080);
 		assert_eq!(config.network.host, "127.0.0.1");
+		assert_eq!(config.network.tor_proxy_port, 48271);
 		assert_eq!(config.paths.db_file, PathBuf::from("custom.db"));
 	}
 }

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, nativeImage, dialog, shell } = require(
+const { app, BrowserWindow, Tray, Menu, nativeImage, dialog, shell, session } = require(
   "electron",
 );
 const { spawn } = require("child_process");
@@ -47,12 +47,14 @@ function getNetworkConfig() {
     const content = fs.readFileSync(configPath, "utf8");
     const port = content.match(/port\s*=\s*(\d+)/);
     const host = content.match(/host\s*=\s*"([^"]+)"/);
+    const proxyport = content.match(/tor_proxy_port\s*=\s*(\d+)/);
     return {
       port: port ? parseInt(port[1]) : 42795,
       host: host ? host[1] : "127.0.0.1",
+      tor_proxy_port: proxyport ? parseInt(proxyport[1]) : 48271,
     };
   }
-  return { port: 42795, host: "127.0.0.1" };
+  return { port: 42795, host: "127.0.0.1", tor_proxy_port: 48271 };
 }
 
 function waitForPort(port, host, retries = 20) {
@@ -132,7 +134,11 @@ function createTray() {
 }
 
 app.on("ready", async () => {
-  const { port, host } = getNetworkConfig();
+  const { port, host, tor_proxy_port } = getNetworkConfig();
+  await session.defaultSession.setProxy({
+    proxyRules: `socks5://127.0.0.1:${tor_proxy_port}`,
+    proxyBypassRules: `127.0.0.1,localhost,${host}:${port}`,
+  });
   const binaryName = process.platform === "win32"
     ? "aleym_api.exe"
     : "aleym_api";
