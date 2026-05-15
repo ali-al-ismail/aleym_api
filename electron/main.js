@@ -155,6 +155,7 @@ app.on("ready", async () => {
   backendProcess.stdout.on("data", (d) => console.log(d.toString()));
 
   await waitForPort(port, host);
+  await new Promise(resolve => setTimeout(resolve, 500)); // currently theres a bug where we connect to the port before axum serves, this is a temporary(tm) solution to mitigate the issue
 
   win = new BrowserWindow({
     width: 1280,
@@ -180,6 +181,13 @@ app.on("ready", async () => {
     if (!app.isQuiting) {
       e.preventDefault();
       win.hide();
+    }
+  });
+
+  win.webContents.on("before-input-event", (event, input) => {
+    if (input.key === "F5") {
+      event.preventDefault();
+      win.webContents.reload();
     }
   });
 
