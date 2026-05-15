@@ -8,7 +8,7 @@ use std::{fs::read_to_string, path::PathBuf};
 pub struct Config {
 	pub network: Network,
 	pub paths: Paths,
-	pub ml: MLConfig,
+	pub scheduler: Scheduler,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -27,7 +27,7 @@ pub struct Paths {
 
 #[derive(Deserialize, Serialize)]
 #[serde(default)]
-pub struct MLConfig {
+pub struct Scheduler {
 	pub min_fetch_interval: i64,
 	pub max_fetch_interval: i64,
 }
@@ -57,11 +57,11 @@ impl Default for Paths {
 	}
 }
 
-impl Default for MLConfig {
+impl Default for Scheduler {
 	fn default() -> Self {
 		Self {
-			min_fetch_interval: 360,
-			max_fetch_interval: 600,
+			min_fetch_interval: 900,
+			max_fetch_interval: 14400,
 		}
 	}
 }

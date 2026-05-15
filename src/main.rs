@@ -23,8 +23,8 @@ async fn main() {
 	let host = config.network.host;
 	let db_file = config.paths.db_file;
 	let ml_config = aleym_core::ml::scheduler::Config {
-		min_fetch_interval: Duration::seconds(config.ml.min_fetch_interval),
-		max_fetch_interval: Duration::seconds(config.ml.max_fetch_interval),
+		min_fetch_interval: Duration::seconds(config.scheduler.min_fetch_interval),
+		max_fetch_interval: Duration::seconds(config.scheduler.max_fetch_interval),
 	};
 	let mut repr = Representative::new(Some(db_file.as_path()))
 		.await
