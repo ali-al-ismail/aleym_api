@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::{fs::read_to_string, path::PathBuf};
 
 // config structure
-#[derive(Deserialize, Serialize, Default)]
+#[derive(Deserialize, Serialize, Default, Debug)]
 #[serde(default)]
 pub struct Config {
 	pub network: Network,
@@ -11,7 +11,7 @@ pub struct Config {
 	pub scheduler: Scheduler,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 #[serde(default)]
 pub struct Network {
 	pub port: u16,
@@ -19,13 +19,13 @@ pub struct Network {
 	pub tor_proxy_port: u16,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 #[serde(default)]
 pub struct Paths {
 	pub db_file: PathBuf,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 #[serde(default)]
 pub struct Scheduler {
 	pub min_fetch_interval: i64,
@@ -66,28 +66,55 @@ impl Default for Scheduler {
 	}
 }
 
-// TODO: function that writes a default config
 impl Config {
-	pub fn load() -> Self {
-		let c_path = dirs::config_dir();
-		let c_file = c_path
+	fn config_path() -> PathBuf {
+		dirs::config_dir()
 			.map(|mut path| {
 				path.push("aleym");
 				std::fs::create_dir_all(&path).ok();
 				path.push("server.toml");
 				path
 			})
-			.unwrap_or_else(|| PathBuf::from("server.toml"));
+			.unwrap_or_else(|| PathBuf::from("server.toml"))
+	}
 
+	#[tracing::instrument(ret, level = tracing::Level::DEBUG)]
+	pub fn load() -> Self {
+		let c_file = Self::config_path();
 		if !c_file.exists() {
-			let default_toml = toml::to_string(&Config::default()).unwrap_or_default();
-			std::fs::write(&c_file, default_toml).ok();
-		}
+			let default = Config::default();
+			tracing::warn!("No config file found, creating default at {:?}", c_file);
+			match toml::to_string(&default) {
+				Ok(toml_str) => {
+					std::fs::write(&c_file, toml_str).ok();
+				}
+				Err(e) => tracing::error!("Failed to serialize default config: {e}"),
+			}
 
-		// TODO: need to log error types, eg. file not found, no read permissions etc
-		match read_to_string(c_file) {
-			Ok(content) => toml::from_str(&content).unwrap_or_else(|_| Config::default()),
-			Err(_) => Config::default(),
+			return default;
+		}
+		match read_to_string(&c_file) {
+			Ok(content) => toml::from_str(&content).unwrap_or_else(|e| {
+				tracing::warn!("Failed to parse config: {e}, using defaults");
+				Config::default()
+			}),
+			Err(e) => {
+				tracing::error!("Failed to read config file: {e}, using defaults");
+				Config::default()
+			}
+		}
+	}
+
+	#[tracing::instrument(skip(self), level = tracing::Level::DEBUG)]
+	pub fn save(&self) {
+		match toml::to_string(self) {
+			Ok(toml_str) => {
+				if let Err(e) = std::fs::write(Self::config_path(), toml_str) {
+					tracing::error!("Failed to write config file: {e}");
+				}
+				tracing::debug!(config = ?self);
+			}
+			Err(e) => tracing::error!("Failed to serialize config: {e}"),
 		}
 	}
 }

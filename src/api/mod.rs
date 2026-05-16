@@ -2,6 +2,7 @@ use axum::http::StatusCode;
 
 pub mod articles;
 pub mod categories;
+pub mod cfg;
 pub mod events;
 pub mod feedback;
 pub mod labels;

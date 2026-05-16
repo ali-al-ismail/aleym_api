@@ -2,6 +2,7 @@ use crate::api::articles::{
 	get_article_by_id, get_articles, get_labels_of_news, link_label, recommend_articles, set_read_flag, unlink_label,
 };
 use crate::api::categories::{create_category, delete_category, get_categories, update_category};
+use crate::api::cfg::{get_config, update_config};
 use crate::api::events::events_handler;
 use crate::api::feedback::process_feedback;
 use crate::api::labels::{create_label, delete_label, get_labels, update_label};
@@ -67,13 +68,15 @@ impl App {
 
 		let feedback_routes = axum::Router::new().route("/feedback", post(process_feedback));
 		let recommendation_route = axum::Router::new().route("/recommend", get(recommend_articles));
+		let config_routes = axum::Router::new().route("/config", get(get_config).put(update_config));
 
 		let api_routes = source_routes
 			.merge(categories_routes)
 			.merge(articles_routes)
 			.merge(feedback_routes)
 			.merge(recommendation_route)
-			.merge(labels_routes);
+			.merge(labels_routes)
+			.merge(config_routes);
 
 		let assets = ServeEmbed::<Assets>::with_parameters(
 			Some("index.html".to_string()),
