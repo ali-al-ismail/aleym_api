@@ -66,6 +66,7 @@ dependencies = [
  "futures",
  "rust-embed",
  "serde",
+ "serde_json",
  "tokio",
  "tokio-stream",
  "toml 1.0.1+spec-1.1.0",

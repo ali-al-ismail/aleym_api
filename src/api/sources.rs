@@ -23,6 +23,7 @@ pub struct Source {
 	pub logo_uri: Option<String>,
 	pub custom_id: Option<String>,
 	pub is_enabled: bool,
+	pub url: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -169,6 +170,7 @@ pub async fn get_sources(State(state): State<Arc<AppState>>) -> ApiResponse<Json
 				logo_uri: src.logo_uri,
 				custom_id: src.custom_id,
 				is_enabled: src.is_enabled,
+				url: get_url(src.informant, &src.informant_parameters),
 			})
 		})
 		.collect::<Result<Vec<_>, _>>()?;
@@ -199,6 +201,7 @@ pub async fn get_source_by_id(State(state): State<Arc<AppState>>, Path(id): Path
 		logo_uri: src.logo_uri,
 		custom_id: src.custom_id,
 		is_enabled: src.is_enabled,
+		url: get_url(src.informant, &src.informant_parameters),
 	}))
 }
 
@@ -267,6 +270,7 @@ pub async fn get_sources_by_category(
 				logo_uri: src.logo_uri,
 				custom_id: src.custom_id,
 				is_enabled: src.is_enabled,
+				url: get_url(src.informant, &src.informant_parameters),
 			})
 		})
 		.collect::<Result<Vec<_>, _>>()?;
@@ -369,6 +373,22 @@ pub async fn manual_fetch(State(state): State<Arc<AppState>>, Path(id): Path<Uui
 		.await
 		.map_err(internal_error)?;
 	Ok(StatusCode::OK)
+}
+
+fn get_url(informant_type: i8, params: &serde_json::Value) -> Option<String> {
+	match informant_type {
+		1 => params
+			.get("FeedRs")
+			.and_then(|v| v.get("feed_url"))
+			.and_then(|v| v.as_str())
+			.map(|s| s.to_string()),
+		2 => params
+			.get("TelegramWeb")
+			.and_then(|v| v.get("channel_id"))
+			.and_then(|v| v.as_str())
+			.map(|s| s.to_string()),
+		_ => None,
+	}
 }
 
 impl From<NetworkType> for InterfaceType {
