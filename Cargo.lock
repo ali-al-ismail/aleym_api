@@ -77,7 +77,7 @@ dependencies = [
 [[package]]
 name = "aleym_core"
 version = "0.1.0-alpha.2"
-source = "git+https://github.com/zefr0x/aleym_core.git#080eae98fc7deda5fcf64da46a69ae6f514f5392"
+source = "git+https://github.com/zefr0x/aleym_core.git#82d84748d6f765e2e4faef1c036dc43e76b34e90"
 dependencies = [
  "ammonia",
  "arti-client",
