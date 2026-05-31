@@ -30,6 +30,11 @@ pub struct Paths {
 pub struct Scheduler {
 	pub min_fetch_interval: i64,
 	pub max_fetch_interval: i64,
+	pub short_term_cutoff_time: i64,
+	pub long_term_cutoff_time: i64,
+	pub fetch_freshness_bias: f32,
+	pub signals_count_limit: u64,
+	pub publication_window_new_items_count_threshold: i32,
 }
 
 impl Default for Network {
@@ -62,6 +67,11 @@ impl Default for Scheduler {
 		Self {
 			min_fetch_interval: 900,
 			max_fetch_interval: 14400,
+			short_term_cutoff_time: 86400,
+			long_term_cutoff_time: 2592000,
+			fetch_freshness_bias: 0.2,
+			signals_count_limit: 1000,
+			publication_window_new_items_count_threshold: 15,
 		}
 	}
 }

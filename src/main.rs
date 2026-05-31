@@ -25,6 +25,11 @@ async fn main() {
 	let ml_config = aleym_core::ml::scheduler::Config {
 		min_fetch_interval: Duration::seconds(config.scheduler.min_fetch_interval),
 		max_fetch_interval: Duration::seconds(config.scheduler.max_fetch_interval),
+		short_term_cutoff_time: Duration::seconds(config.scheduler.short_term_cutoff_time),
+		long_term_cutoff_time: Duration::seconds(config.scheduler.long_term_cutoff_time),
+		fetch_freshness_bias: config.scheduler.fetch_freshness_bias,
+		signals_count_limit: config.scheduler.signals_count_limit,
+		publication_window_new_items_count_threshold: config.scheduler.publication_window_new_items_count_threshold,
 	};
 	let mut repr = Representative::new(Some(db_file.as_path()))
 		.await
