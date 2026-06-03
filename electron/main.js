@@ -162,6 +162,8 @@ app.on("ready", async () => {
     height: 800,
     autoHideMenuBar: true,
     icon: path.join(__dirname, "icons", "icon.png"),
+    minWidth: 800,
+    minHeight: 600,
   });
   win.loadURL(`http://${host}:${port}`);
 
