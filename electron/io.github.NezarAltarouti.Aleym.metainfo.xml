@@ -4,10 +4,11 @@
     <project_license>AGPL-3.0-only</project_license>
     <id>io.github.NezarAltarouti.Aleym</id>
     <name>Aleym Electron UI</name>
-    <summary>Aggregate news</summary>
+    <summary>Aggregate news privately</summary>
     <description>
-        <p>Graphical user interface for Aleym, the highly extensible news aggregation system and knowledge-base. It prioritizes organization, efficiency, security, and privacy.</p>
-        <p><em>Warning: The application didn't go through any prefessional security auditing, and the currently Tor support is reling on an old version of `Arti` due to some limitations that will be resolved as soon as possible, so it can't be trusted for sensitive use cases yet.</em></p>
+        <p><em>Warning: The application didn't go through prefessional security auditing.</em></p>
+        <p>Graphical user interface for Aleym, the highly extensible news aggregation system and knowledge-base. It prioritizes security and privacy by relying on anonymized networks and randomized fetching scheudle.</p>
+        <p>It balances both a real-time like experience and user privacy.</p>
         <p>Features:</p>
         <ul>
             <li>Local first</li>
@@ -34,6 +35,11 @@
     <url type="bugtracker">https://github.com/NezarAltarouti/Aleym/issues</url>
     <url type="vcs-browser">https://github.com/NezarAltarouti/Aleym</url>
     <releases>
+        <release version="1.1.0" date="2026-06-03" urgency="low">
+            <url>https://github.com/NezarAltarouti/Aleym/releases/tag/1.1.0</url>
+        </release>
+    </releases>
+    <releases>
         <release version="1.0.1" date="2026-05-09" urgency="low">
             <url>https://github.com/NezarAltarouti/Aleym/releases/tag/1.0.1</url>
         </release>
@@ -41,15 +47,15 @@
     <screenshots>
         <screenshot type="default">
             <caption>Main feed page without any filters in grid view mode</caption>
-            <image type="source">https://raw.githubusercontent.com/ali-al-ismail/aleym_api/c9ac538e864e9d0637439391f28a8a40a97a2e94/screenshots/linux/feed_page.png</image>
+            <image type="source">https://raw.githubusercontent.com/ali-al-ismail/aleym_api/b7d58c7dbcb0c7cae52b077d6cc5d67db6d044f1/screenshots/linux/feed_page.png</image>
         </screenshot>
         <screenshot>
             <caption>For you, recommendations page in grid view mode</caption>
-            <image type="source">https://raw.githubusercontent.com/ali-al-ismail/aleym_api/c9ac538e864e9d0637439391f28a8a40a97a2e94/screenshots/linux/for_you_page.png</image>
+            <image type="source">https://raw.githubusercontent.com/ali-al-ismail/aleym_api/b7d58c7dbcb0c7cae52b077d6cc5d67db6d044f1/screenshots/linux/for_you_page.png</image>
         </screenshot>
         <screenshot>
             <caption>News sources and categories management page</caption>
-            <image type="source">https://raw.githubusercontent.com/ali-al-ismail/aleym_api/c9ac538e864e9d0637439391f28a8a40a97a2e94/screenshots/linux/source_management.png</image>
+            <image type="source">https://raw.githubusercontent.com/ali-al-ismail/aleym_api/b7d58c7dbcb0c7cae52b077d6cc5d67db6d044f1/screenshots/linux/source_management.png</image>
         </screenshot>
     </screenshots>
 </component>
