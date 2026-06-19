@@ -27,6 +27,7 @@ aleym_core = { git = "https://github.com/ali-al-ismail/aleym_core/", branch = "f
 tracing = "0.1.44"
 dirs = "6.0.0"
 toml = "1.1.2"
+thiserror = "2.0.18"
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
