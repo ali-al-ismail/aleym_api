@@ -7,6 +7,7 @@ use aleym_core::Representative;
 use aleym_core::db::StorageConnection;
 use aleym_core::db::time::Duration;
 use std::sync::Arc;
+use tauri::Emitter;
 use tauri::Manager;
 use tracing_subscriber::EnvFilter;
 
@@ -69,7 +70,8 @@ pub fn run() {
 			let repr = Arc::new(repr);
 			let sched_repr = repr.clone();
 			let proxy_repr = repr.clone();
-			let state = app.manage(AppState { repr });
+			app.manage(AppState { repr });
+			let app_handle = app.handle().clone();
 			// scheduler thread
 			tauri::async_runtime::spawn(async move { sched_repr.start_scheduler(notif, ml_config).await.unwrap() });
 			// core library events thread
@@ -77,8 +79,12 @@ pub fn run() {
 				while let Some(event) = event_rx.recv().await {
 					tracing::debug!("Received event: {:?}", event);
 					match event {
-						Event::InformantError { source_id, error } => {} // send error event
-						Event::NewsUpdated { source_id, updates } => {} // we should send the event and also the new items to prevent the frontend from having to fetch again
+						Event::InformantError { source_id, error } => {
+							app_handle.emit("informant_error", (source_id, error)).unwrap();
+						} // send error event
+						Event::NewsUpdated { source_id, updates: _ } => {
+							app_handle.emit("news_updated", source_id).unwrap();
+						} // we should send the event and also the new items to prevent the frontend from having to fetch again
 					}
 				}
 			});
