@@ -58,6 +58,47 @@ pub async fn edit_category(
 }
 
 #[tauri::command]
+pub async fn assign_category_to_source(
+	state: State<'_, AppState>,
+	source: Uuid,
+	category: Uuid,
+) -> Result<(), BackendError> {
+	state.repr.storage.assign_category_to_source(source, category).await?;
+	Ok(())
+}
+
+#[tauri::command]
+pub async fn unassign_category_from_source(
+	state: State<'_, AppState>,
+	source: Uuid,
+	category: Uuid,
+) -> Result<(), BackendError> {
+	state
+		.repr
+		.storage
+		.unassign_category_from_source(source, category)
+		.await?;
+	Ok(())
+}
+
+#[tauri::command]
+pub async fn get_categories_of_source(state: State<'_, AppState>, source: Uuid) -> Result<Vec<Category>, BackendError> {
+	let categories = state
+		.repr
+		.storage
+		.get_categories_of_source(source)
+		.await?
+		.into_iter()
+		.map(|category_model| Category {
+			id: category_model.id,
+			name: category_model.name,
+			description: category_model.description,
+		})
+		.collect();
+	Ok(categories)
+}
+
+#[tauri::command]
 pub async fn delete_category(state: State<'_, AppState>, id: Uuid) -> Result<(), BackendError> {
 	state.repr.storage.delete_source_category(id).await?;
 	Ok(())

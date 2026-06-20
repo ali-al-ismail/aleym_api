@@ -1,7 +1,13 @@
 #![recursion_limit = "256"]
 mod config;
 mod handlers;
-use crate::handlers::categories::{create_category, delete_category, edit_category, get_categories};
+use crate::handlers::{
+	categories::{
+		assign_category_to_source, create_category, delete_category, edit_category, get_categories,
+		get_categories_of_source, unassign_category_from_source,
+	},
+	sources::{add_source, delete_source, edit_source, get_all_sources, get_source, get_sources_by_category},
+};
 use aleym_core::Event;
 use aleym_core::Representative;
 use aleym_core::db::StorageConnection;
@@ -103,7 +109,16 @@ pub fn run() {
 			get_categories,
 			create_category,
 			edit_category,
-			delete_category
+			delete_category,
+			assign_category_to_source,
+			unassign_category_from_source,
+			get_categories_of_source,
+			add_source,
+			get_source,
+			get_all_sources,
+			delete_source,
+			edit_source,
+			get_sources_by_category
 		])
 		.run(tauri::generate_context!())
 		.expect("error while running tauri application");
