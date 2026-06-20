@@ -1,6 +1,7 @@
 use aleym_core::{Error as CoreError, db::StorageError, inform::InformantError, net::NetworkError};
 use serde::Serialize;
 pub mod categories;
+pub mod cfg;
 pub mod feedback;
 pub mod labels;
 pub mod news;

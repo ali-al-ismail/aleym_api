@@ -1,0 +1,15 @@
+use tauri::State;
+
+use crate::{AppState, config::Config, handlers::BackendError};
+
+#[tauri::command]
+pub async fn get_config(state: State<'_, AppState>) -> Result<Config, BackendError> {
+	let cfg = Config::load();
+	Ok(cfg)
+}
+// need to properly look at this later, most likely has cases where it fails and gives an exception
+#[tauri::command]
+pub async fn update_config(state: State<'_, AppState>, config: Config) -> Result<(), BackendError> {
+	config.save();
+	Ok(())
+}
