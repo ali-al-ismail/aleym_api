@@ -6,6 +6,10 @@ use crate::handlers::{
 		assign_category_to_source, create_category, delete_category, edit_category, get_categories,
 		get_categories_of_source, unassign_category_from_source,
 	},
+	labels::{
+		assign_label_to_news, create_news_label, delete_news_label, edit_news_label, get_all_news_labels,
+		get_news_label, unassign_label_from_news,
+	},
 	sources::{add_source, delete_source, edit_source, get_all_sources, get_source, get_sources_by_category},
 };
 use aleym_core::Event;
@@ -118,7 +122,14 @@ pub fn run() {
 			get_all_sources,
 			delete_source,
 			edit_source,
-			get_sources_by_category
+			get_sources_by_category,
+			assign_label_to_news,
+			create_news_label,
+			edit_news_label,
+			get_all_news_labels,
+			get_news_label,
+			unassign_label_from_news,
+			delete_news_label,
 		])
 		.run(tauri::generate_context!())
 		.expect("error while running tauri application");
