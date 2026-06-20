@@ -15,6 +15,8 @@ pub enum BackendError {
 	InvalidWeightsSum,
 	#[error("invalid percentage: {0}")]
 	InvalidPercentage(i8),
+	#[error("provided Json does not match the required structure: {0}")]
+	InvalidJsonParameters(String),
 	#[error("storage error: {0}")]
 	Storage(String), // collapse the rest into a general type
 
@@ -42,6 +44,7 @@ impl From<StorageError> for BackendError {
 			StorageError::DatabaseError(db_err) => BackendError::Database(db_err.to_string()),
 			StorageError::InvalidWeightsSum => BackendError::InvalidWeightsSum,
 			StorageError::InvalidPercentageNumber(n) => BackendError::InvalidPercentage(n),
+			StorageError::InvalidJsonParameters(srd_err) => BackendError::InvalidJsonParameters(srd_err.to_string()),
 			other => BackendError::Storage(other.to_string()),
 		}
 	}
