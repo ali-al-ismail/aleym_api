@@ -6,6 +6,8 @@ use crate::handlers::{
 		assign_category_to_source, create_category, delete_category, edit_category, get_categories,
 		get_categories_of_source, unassign_category_from_source,
 	},
+	cfg::{get_config, update_config},
+	feedback::store_user_feedback_signal,
 	labels::{
 		assign_label_to_news, create_news_label, delete_news_label, edit_news_label, get_all_news_labels,
 		get_news_label, unassign_label_from_news,
@@ -134,7 +136,10 @@ pub fn run() {
 			get_news,
 			get_news_recommendations,
 			get_news_with_filter,
-			set_news_read
+			set_news_read,
+			get_config,
+			update_config,
+			store_user_feedback_signal
 		])
 		.run(tauri::generate_context!())
 		.expect("error while running tauri application");
