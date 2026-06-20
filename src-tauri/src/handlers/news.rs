@@ -153,6 +153,7 @@ pub async fn get_news_recommendations(
 	limit: u64,
 	candidates_limit: u64,
 ) -> Result<Vec<SimpleNews>, BackendError> {
+	let mut rng: rand::rngs::StdRng = rand::make_rng();
 	let news_models = state
 		.repr
 		.storage
@@ -160,6 +161,7 @@ pub async fn get_news_recommendations(
 			limit,
 			candidates_limit,
 			&aleym_core::ml::recommendation::Config::default(), // TODO: later on I will make it so users can modify their parameters
+			&mut rng,                                           // tauri needs a sendable rng for async functions
 		)
 		.await?
 		.into_iter()

@@ -15,6 +15,7 @@ use crate::handlers::{
 	news::{get_news, get_news_recommendations, get_news_with_filter, set_news_read},
 	sources::{add_source, delete_source, edit_source, get_all_sources, get_source, get_sources_by_category},
 };
+
 use aleym_core::Event;
 use aleym_core::Representative;
 use aleym_core::db::StorageConnection;
@@ -86,7 +87,10 @@ pub fn run() {
 			app.manage(AppState { repr });
 			let app_handle = app.handle().clone();
 			// scheduler thread
-			tauri::async_runtime::spawn(async move { sched_repr.start_scheduler(notif, ml_config).await.unwrap() });
+			tauri::async_runtime::spawn(async move {
+				let mut rng: rand::rngs::StdRng = rand::make_rng();
+				sched_repr.start_scheduler(notif, ml_config, &mut rng).await.unwrap()
+			});
 			// core library events thread
 			tauri::async_runtime::spawn(async move {
 				while let Some(event) = event_rx.recv().await {
