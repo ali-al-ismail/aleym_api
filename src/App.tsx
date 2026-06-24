@@ -1,51 +1,48 @@
 import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
+import { AppSidebar } from "./components/sidebar";
+import { SidebarInset, SidebarProvider } from "./components/ui/sidebar";
+import { NewsPage } from "./pages/news";
+import { ThemeProvider } from "next-themes";
 import "./App.css";
+import { Header } from "./components/header";
+import { TooltipProvider } from "./components/ui/tooltip";
+import { RecommendPage } from "./pages/recommend";
+import { ManagePage } from "./pages/manage";
+import { AboutPage } from "./pages/about";
+import { SettingsPage } from "./pages/settings";
+
+export type Page = "news" | "recommend" | "manage" | "settings" | "about";
 
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
-
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
-
+  const [page, setPage] = useState<Page>("news");
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
+    <TooltipProvider>
+      <div className="flex h-screen min-w-0">
+        <main className="min-w-0 flex-1 overflow-auto">
+          <SidebarProvider
+            style={
+              {
+                "--sidebar-width": "calc(var(--spacing) * 56)",
+                "--header-height": "calc(var(--spacing) * 15)",
+              } as React.CSSProperties
+            }
+          >
+            <AppSidebar page={page} setPage={setPage} variant="sidebar" />
 
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+            <SidebarInset className="min-w-0">
+              {(page === "recommend" || page === "news") && <Header />}
+              <div className="">
+                {page === "news" && <NewsPage />}
+                {page === "recommend" && <RecommendPage />}
+                {page === "manage" && <ManagePage />}
+                {page === "settings" && <SettingsPage />}
+                {page === "about" && <AboutPage />}
+              </div>
+            </SidebarInset>
+          </SidebarProvider>
+        </main>
       </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
-    </main>
+    </TooltipProvider>
   );
 }
-
 export default App;
