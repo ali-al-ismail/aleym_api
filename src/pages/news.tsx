@@ -139,7 +139,6 @@ export function NewsPage() {
 
   const { mutate: markAsRead } = useMutation({
     mutationFn: (id: string) => setNewsRead([id], true),
-
     onMutate: async (id) => {
       await queryClient.cancelQueries({
         queryKey: ["news"],
@@ -156,7 +155,6 @@ export function NewsPage() {
       });
 
       const previousArticle = queryClient.getQueryData<News>(["article", id]);
-
       queryClient.setQueryData<News>(["article", id], (old) =>
         old
           ? {
@@ -165,7 +163,6 @@ export function NewsPage() {
             }
           : old,
       );
-
       queryClient.setQueriesData<InfiniteData<SimpleNews[]>>(
         {
           queryKey: ["news"],
@@ -224,6 +221,13 @@ export function NewsPage() {
     setSelectedId(id);
     setSheetOpen(true);
   }, []);
+
+  useEffect(() => {
+    parentRef.current?.scrollTo({
+      top: 0,
+      behavior: "instant",
+    });
+  }, [filter]);
 
   return (
     <>
