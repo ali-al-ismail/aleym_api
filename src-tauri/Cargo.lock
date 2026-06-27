@@ -55,11 +55,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "aleym-tauri"
-version = "0.1.0"
+name = "aleym"
+version = "1.2.0"
 dependencies = [
  "aleym_core",
  "ammonia",
+ "chrono",
  "dirs",
  "rand 0.10.1",
  "serde",

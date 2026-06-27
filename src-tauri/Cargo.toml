@@ -1,7 +1,7 @@
 [package]
-name = "aleym-tauri"
-version = "0.1.0"
-description = "A Tauri App"
+name = "aleym"
+version = "1.2.0"
+description = "A news aggregation and knowledge base system"
 authors = ["you"]
 edition = "2021"
 
@@ -15,6 +15,7 @@ name = "aleym_tauri_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
+chrono = "0.4.45"
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
@@ -32,6 +33,8 @@ rand = "0.10.1"
 tauri-plugin-dialog = "2"
 tauri-plugin-notification = "2"
 ammonia = "4.1.2"
+
+
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration

@@ -29,6 +29,11 @@ pub struct AppState {
 	repr: Arc<Representative>,
 }
 
+#[tauri::command]
+fn get_build_info() -> (String, String) {
+	(env!("BUILD_DATE").to_string(), env!("GIT_HASH").to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
 	tracing_subscriber::fmt()
@@ -146,7 +151,8 @@ pub fn run() {
 			set_news_read,
 			get_config,
 			update_config,
-			store_user_feedback_signal
+			store_user_feedback_signal,
+			get_build_info,
 		])
 		.run(tauri::generate_context!())
 		.expect("error while running tauri application");
