@@ -1,4 +1,5 @@
 use aleym_core::db::{BySourceDirectory, BySources, NewsFilter, TIME_MAX, TIME_MIN, time::OffsetDateTime, uuid::Uuid};
+use ammonia::clean;
 use serde::{Deserialize, Serialize};
 use tauri::State;
 
@@ -32,6 +33,7 @@ pub struct News {
 	pub first_fetched_at: i64,
 	pub last_fetched_at: i64,
 	pub published_at: Option<i64>,
+	pub updated_at: Option<i64>,
 	pub is_read: bool,
 }
 
@@ -56,6 +58,7 @@ pub enum SortOrder {
 }
 
 // TODO: handle unwraps cleanly
+/// This function strips all from the summary and title html tags leaving pure text only
 #[tauri::command]
 pub async fn get_news_with_filter(
 	state: State<'_, AppState>,
@@ -116,9 +119,9 @@ pub async fn get_news_with_filter(
 		.map(|news_model| SimpleNews {
 			id: news_model.id,
 			source: news_model.source,
-			title: news_model.title,
+			title: clean_pure(&news_model.title),
 			uri: news_model.uri,
-			summary: news_model.summary,
+			summary: news_model.summary.as_deref().map(clean_pure),
 			has_content: news_model.content.is_some(),
 			first_fetched_at: news_model.first_fetched_at.unix_timestamp(),
 			last_fetched_at: news_model.last_fetched_at.unix_timestamp(),
@@ -130,19 +133,21 @@ pub async fn get_news_with_filter(
 	Ok(news)
 }
 
+/// This function cleans unsafe html tags from summary and content but maintains the actual content formatting
 #[tauri::command]
 pub async fn get_news(state: State<'_, AppState>, id: Uuid) -> Result<News, BackendError> {
 	let news_model = state.repr.storage.get_news(id).await?;
 	Ok(News {
 		id: news_model.id,
 		source: news_model.source,
-		title: news_model.title,
+		title: clean_pure(&news_model.title),
 		uri: news_model.uri,
-		summary: news_model.summary,
-		content: news_model.content,
+		summary: news_model.summary.as_deref().map(clean),
+		content: news_model.content.as_deref().map(clean),
 		first_fetched_at: news_model.first_fetched_at.unix_timestamp(),
 		last_fetched_at: news_model.last_fetched_at.unix_timestamp(),
 		published_at: news_model.published_at.map(|t| t.unix_timestamp()),
+		updated_at: news_model.updated_at.map(|t| t.unix_timestamp()),
 		is_read: news_model.is_read,
 	})
 }
@@ -187,4 +192,11 @@ pub async fn get_news_recommendations(
 pub async fn set_news_read(state: State<'_, AppState>, news: Vec<Uuid>, is_read: bool) -> Result<(), BackendError> {
 	state.repr.storage.set_news_read(news, is_read).await?;
 	Ok(())
+}
+
+fn clean_pure(html: &str) -> String {
+	ammonia::Builder::new()
+		.tags(std::collections::HashSet::new())
+		.clean(html)
+		.to_string()
 }

@@ -12,7 +12,7 @@ pub struct Category {
 }
 
 #[tauri::command]
-pub async fn get_categories(state: State<'_, AppState>) -> Result<Vec<Category>, BackendError> {
+pub async fn get_all_categories(state: State<'_, AppState>) -> Result<Vec<Category>, BackendError> {
 	let categories = state
 		.repr
 		.storage

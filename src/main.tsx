@@ -11,6 +11,7 @@ import {
 } from "@/lib/themes";
 
 import App from "./App";
+import { AppToaster } from "./components/ui/app-toaster";
 
 ThemeScript();
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
         baseColors={BASE_COLORS}
         defaultBaseColor={DEFAULT_BASE_COLOR}
       >
+        <AppToaster />
         <App />
       </ColorThemeProvider>
     </QueryClientProvider>

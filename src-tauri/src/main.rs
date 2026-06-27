@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    aleym_tauri_lib::run()
+	aleym_tauri_lib::run()
 }

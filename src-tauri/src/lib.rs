@@ -3,7 +3,7 @@ mod config;
 mod handlers;
 use crate::handlers::{
 	categories::{
-		assign_category_to_source, create_category, delete_category, edit_category, get_categories,
+		assign_category_to_source, create_category, delete_category, edit_category, get_all_categories,
 		get_categories_of_source, unassign_category_from_source,
 	},
 	cfg::{get_config, update_config},
@@ -53,6 +53,8 @@ pub fn run() {
 
 	tracing::warn!("Application starting...");
 	tauri::Builder::default()
+		.plugin(tauri_plugin_notification::init())
+		.plugin(tauri_plugin_dialog::init())
 		.plugin(tauri_plugin_opener::init())
 		.setup(move |app| {
 			//let window = app.get_webview_window("main").unwrap();
@@ -99,8 +101,9 @@ pub fn run() {
 						Event::InformantError { source_id, error } => {
 							app_handle.emit("informant_error", (source_id, error)).unwrap();
 						} // send error event
-						Event::NewsUpdated { source_id, updates: _ } => {
-							app_handle.emit("news_updated", source_id).unwrap();
+						Event::NewsUpdated { source_id, updates } => {
+							let number_of_news = updates.new.len();
+							app_handle.emit("news_updated", (source_id, number_of_news)).unwrap();
 						} // we should send the event and also the new items to prevent the frontend from having to fetch again
 					}
 				}
@@ -117,7 +120,7 @@ pub fn run() {
 			Ok(())
 		})
 		.invoke_handler(tauri::generate_handler![
-			get_categories,
+			get_all_categories,
 			create_category,
 			edit_category,
 			delete_category,

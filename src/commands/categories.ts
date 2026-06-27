@@ -1,8 +1,8 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { Category } from "../types/categories";
 
-export async function getCategories(): Promise<Category[]> {
-  return invoke<Category[]>("get_categories");
+export async function getAllCategories(): Promise<Category[]> {
+  return invoke<Category[]>("get_all_categories");
 }
 
 export async function createCategory(
