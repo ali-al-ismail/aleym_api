@@ -10,7 +10,7 @@ use crate::handlers::{
 	feedback::store_user_feedback_signal,
 	labels::{
 		assign_label_to_news, create_news_label, delete_news_label, edit_news_label, get_all_news_labels,
-		get_news_label, unassign_label_from_news,
+		get_labels_of_news, get_news_label, unassign_label_from_news,
 	},
 	news::{get_news, get_news_recommendations, get_news_with_filter, set_news_read},
 	sources::{add_source, delete_source, edit_source, get_all_sources, get_source, get_sources_by_category},
@@ -143,6 +143,7 @@ pub fn run() {
 			edit_news_label,
 			get_all_news_labels,
 			get_news_label,
+			get_labels_of_news,
 			unassign_label_from_news,
 			delete_news_label,
 			get_news,

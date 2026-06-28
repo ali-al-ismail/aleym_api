@@ -292,6 +292,8 @@ export function NewsPage() {
                         summary={article.summary}
                         has_content={article.has_content}
                         is_read={article.is_read}
+                        uri={article.uri}
+                        labels={labels}
                         onClick={handleCardClick}
                       />
                     ))}

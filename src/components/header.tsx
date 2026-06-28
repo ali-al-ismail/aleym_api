@@ -68,6 +68,21 @@ export function Header({
   );
 }
 
+export function SearchlessHeader() {
+  return (
+    <header className="bg-background/80 z-10 backdrop-blur sticky top-0 flex h-(--header-height) shrink-0 items-center gap-2 px-4 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
+      {/*left div*/}
+      <div className="flex items-center gap-2">
+        <SidebarTrigger className="-ml-1" />
+      </div>
+      {/*center div*/}
+      <div className="flex min-w-0 flex-1 justify-center items-center gap-2"></div>
+      {/*right div*/}
+      <div className="flex items-center gap-2"></div>
+    </header>
+  );
+}
+
 export function AdvancedSearchButton({
   filter,
   setFilter,

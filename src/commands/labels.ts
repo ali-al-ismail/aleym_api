@@ -20,6 +20,11 @@ export async function getNewsLabel(id: string
   return invoke<Label>("get_news_label", {id});
 }
 
+export async function getLabelsOfNews(id: string
+): Promise<Label[]> {
+  return invoke<Label[]>("get_labels_of_news", {id});
+}
+
 export async function deleteNewsLabel(id: string
 ): Promise<void> {
   return invoke<void>("delete_news_label", {id});

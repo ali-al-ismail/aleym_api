@@ -15,11 +15,42 @@ import { Skeleton } from "./ui/skeleton";
 import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
 import { Sheet, SheetContent, SheetFooter, SheetHeader } from "./ui/sheet";
-import { ExternalLink } from "lucide-react";
-import { News } from "@/types/news";
+import {
+  BookCheck,
+  Bookmark,
+  EllipsisVertical,
+  ExternalLink,
+} from "lucide-react";
+import { News, SimpleNews } from "@/types/news";
 import { Separator } from "./ui/separator";
-import { memo } from "react";
+import { memo, useMemo, useState } from "react";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { setNewsRead } from "@/commands/news";
+import {
+  InfiniteData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import {
+  assignLabelToNews,
+  getLabelsOfNews,
+  unassignLabelFromNews,
+} from "@/commands/labels";
+import { Label } from "@/types/labels";
+import { LabelsResult } from "@/hooks/labelhooks";
 // might remove when I implement the News interface for the rust type
 interface NewsCardProps {
   id: string;
@@ -29,6 +60,8 @@ interface NewsCardProps {
   summary?: string | null;
   has_content: boolean;
   is_read: boolean;
+  uri: string | null;
+  labels?: LabelsResult;
   onClick?: (id: string) => void;
 }
 
@@ -64,21 +97,234 @@ export const NewsCard = memo(function NewsCard({
   published_at,
   summary,
   is_read,
+  uri,
+  labels,
   onClick,
 }: NewsCardProps) {
+  const queryClient = useQueryClient();
+  const [labelsOpen, setLabelsOpen] = useState(false);
+  const { data: newsLabels } = useQuery({
+    queryKey: ["news-labels", id],
+    queryFn: () => getLabelsOfNews(id),
+    enabled: labelsOpen,
+    staleTime: 5 * 60 * 1000,
+  });
+  const { mutate: markAsRead } = useMutation({
+    mutationFn: ({ id, is_read }: { id: string; is_read: boolean }) =>
+      setNewsRead([id], is_read),
+
+    onMutate: async ({ id, is_read }) => {
+      await queryClient.cancelQueries({
+        queryKey: ["news"],
+      });
+
+      queryClient.setQueriesData<InfiniteData<SimpleNews[]>>(
+        {
+          queryKey: ["news"],
+        },
+        (old) => {
+          if (!old) return old;
+
+          return {
+            ...old,
+            pages: old.pages.map((page) =>
+              page.map((article) =>
+                article.id === id
+                  ? {
+                      ...article,
+                      is_read,
+                    }
+                  : article,
+              ),
+            ),
+          };
+        },
+      );
+
+      queryClient.setQueryData<News>(["article", id], (old) =>
+        old
+          ? {
+              ...old,
+              is_read,
+            }
+          : old,
+      );
+    },
+
+    onSettled: (_data, _error, { id }) => {
+      queryClient.invalidateQueries({
+        queryKey: ["article", id],
+      });
+    },
+  });
+  const assignedLabels = useMemo(
+    () => new Set(newsLabels?.map((l) => l.id) ?? []),
+    [newsLabels],
+  );
+  const { mutate: toggleLabel } = useMutation({
+    mutationFn: ({
+      newsId,
+      labelId,
+      assign,
+    }: {
+      newsId: string;
+      labelId: string;
+      assign: boolean;
+    }) => {
+      if (assign) {
+        return assignLabelToNews(newsId, labelId);
+      }
+
+      return unassignLabelFromNews(newsId, labelId);
+    },
+    onMutate: async ({ newsId, labelId, assign }) => {
+      await queryClient.cancelQueries({
+        queryKey: ["news-labels", newsId],
+      });
+
+      const previousLabels = queryClient.getQueryData<Label[]>([
+        "news-labels",
+        newsId,
+      ]);
+
+      queryClient.setQueryData<Label[]>(["news-labels", newsId], (old = []) => {
+        if (assign) {
+          const label = labels?.list.find((l) => l.id === labelId);
+
+          if (!label || old.some((l) => l.id === labelId)) {
+            return old;
+          }
+
+          return [...old, label];
+        }
+
+        return old.filter((l) => l.id !== labelId);
+      });
+
+      return { previousLabels };
+    },
+
+    onError: (_err, variables, context) => {
+      if (context?.previousLabels) {
+        queryClient.setQueryData(
+          ["news-labels", variables.newsId],
+          context.previousLabels,
+        );
+      }
+    },
+
+    onSettled: (_data, _error, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["news-labels", variables.newsId],
+      });
+    },
+  });
   return (
     <div className="py-3 h-full">
       <Card
         onClick={() => onClick?.(id)}
         className={cn(
-          "h-full flex flex-col transition-shadow duration-200 hover:shadow-lg cursor-pointer border-l-4",
+          "relative h-full flex flex-col transition-shadow duration-200 hover:shadow-lg cursor-pointer border-l-4 group",
           is_read
             ? "opacity-95 text-muted-foreground border-l-transparent"
             : "border-l-primary",
         )}
       >
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <EllipsisVertical className="" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            className="min-w-40"
+            align="start"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <DropdownMenuCheckboxItem
+              checked={is_read}
+              onCheckedChange={() => {
+                markAsRead({
+                  id,
+                  is_read: !is_read,
+                });
+              }}
+              onSelect={(e) => e.preventDefault()}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <BookCheck className="mr-2" />
+              Mark as read
+            </DropdownMenuCheckboxItem>
+            {uri && (
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openUrl(uri);
+                }}
+              >
+                <ExternalLink className="mr-2" />
+                Open Original
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuSub onOpenChange={setLabelsOpen}>
+              <DropdownMenuSubTrigger className="flex items-center gap-2">
+                <Bookmark className="mr-2" />
+                Labels
+                {assignedLabels.size > 0 && (
+                  <span className="ml-auto text-xs bg-primary text-primary-foreground rounded-full px-1.5 py-0.5">
+                    {assignedLabels.size}
+                  </span>
+                )}
+              </DropdownMenuSubTrigger>
+
+              <DropdownMenuPortal>
+                <DropdownMenuSubContent className="p-3">
+                  <div className="space-y-3">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      Assign labels
+                    </p>
+
+                    <div className="flex flex-wrap gap-2">
+                      {labels?.list.map((label) => {
+                        const assigned = assignedLabels.has(label.id);
+
+                        return (
+                          <Button
+                            key={label.id}
+                            variant={assigned ? "default" : "outline"}
+                            size="sm"
+                            className="text-xs"
+                            onClick={(e) => {
+                              e.stopPropagation();
+
+                              toggleLabel({
+                                newsId: id,
+                                labelId: label.id,
+                                assign: !assigned,
+                              });
+                            }}
+                          >
+                            {label.name}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </DropdownMenuSubContent>
+              </DropdownMenuPortal>
+            </DropdownMenuSub>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         <CardHeader className="pb-3">
           {source_name ?? "No name"}
+
           <CardTitle
             className={cn(
               "text-xl leading-tight line-clamp-2",

@@ -49,6 +49,23 @@ pub async fn get_news_label(state: State<'_, AppState>, id: Uuid) -> Result<Labe
 }
 
 #[tauri::command]
+pub async fn get_labels_of_news(state: State<'_, AppState>, id: Uuid) -> Result<Vec<Label>, BackendError> {
+	let labels = state
+		.repr
+		.storage
+		.get_labels_of_news(id)
+		.await?
+		.into_iter()
+		.map(|label_model| Label {
+			id: label_model.id,
+			name: label_model.name,
+			description: label_model.description,
+		})
+		.collect();
+	Ok(labels)
+}
+
+#[tauri::command]
 pub async fn delete_news_label(state: State<'_, AppState>, id: Uuid) -> Result<(), BackendError> {
 	state.repr.storage.delete_news_label(id).await?;
 	Ok(())

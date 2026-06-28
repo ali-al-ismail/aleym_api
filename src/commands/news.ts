@@ -39,3 +39,7 @@ export async function setNewsRead(
 ): Promise<void> {
   return invoke("set_news_read", { news, isRead });
 }
+
+export async function getNewsRecommendations(limit: number, candidatesLimit: number): Promise<SimpleNews[]> {
+  return invoke("get_news_recommendations", {limit, candidatesLimit})
+}
